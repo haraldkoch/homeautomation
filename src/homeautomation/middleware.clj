@@ -9,7 +9,8 @@
             [ring.middleware.webjars :refer [wrap-webjars]]
             [ring.middleware.defaults :refer [site-defaults wrap-defaults]]
             [ring.middleware.anti-forgery :refer [wrap-anti-forgery]]
-            [ring.middleware.format :refer [wrap-restful-format]]))
+            [ring.middleware.format :refer [wrap-restful-format]])
+  (:import [javax.servlet ServletContext]))
 
 (defn wrap-context [handler]
   (fn [request]
@@ -18,7 +19,7 @@
                 ;; If we're not inside a servlet environment
                 ;; (for example when using mock requests), then
                 ;; .getContextPath might not exist
-                (try (.getContextPath context)
+                (try (.getContextPath ^ServletContext context)
                      (catch IllegalArgumentException _ context))
                 ;; if the context is not specified in the request
                 ;; we check if one has been specified in the environment
