@@ -27,9 +27,9 @@ JOIN devices ON (users.id = devices.owner)
 WHERE devices.name = :device;
 
 -- name: find-device
--- find a device by name
+-- find a device by MAC address
 SELECT * FROM devices
-WHERE name = :device;
+WHERE macaddr = :macaddr;
 
 -- name: get-device
 -- get a device by ID
@@ -40,6 +40,22 @@ WHERE id = :id;
 SELECT * FROM devices
 WHERE owner = :owner;
 
--- name: create-device<!
+-- name: create-device!
 INSERT INTO devices
-(name) VALUES (:device)
+(macaddr, name, status, last_status_change, last_seen)
+VALUES (:macaddr, :name, :status, :last_status_change, :last_seen);
+
+-- name: update-device-name!
+UPDATE devices
+SET name = :name
+WHERE macaddr = :macaddr;
+
+-- name: update-device-seen!
+UPDATE devices
+SET last_seen = :last_seen
+WHERE macaddr = :macaddr;
+
+-- name: update-device-status!
+UPDATE devices
+SET status = :status, last_status_change = :last_status_change
+WHERE macaddr = :macaddr;
