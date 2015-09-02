@@ -1,8 +1,8 @@
 # homeautomation
 
 TODO:
-- new mac address appears on network
-  - assign device name
+* new mac address appears on network
+  * assign device name
   - associate with a user
 - new macaddr + device appears on network
 - existing macaddr + new device name appears
