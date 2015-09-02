@@ -13,7 +13,21 @@
     (migrations/migrate ["migrate"])
     (f)))
 
-(deftest test-users
+; find-device when device doesn't exist
+; find device when device does exist
+; find-device-for-user when user doesn't exist
+(deftest new-device
+  (with-transaction [t-conn db/conn]
+    (jdbc/db-set-rollback-only! t-conn)
+    (is (= 0 (count (db/find-device {:device "NON-EXISTENT-DEVICE"}))))))
+
+(deftest existing-device
+  (with-transaction [t-conn db/conn]
+                    (jdbc/db-set-rollback-only! t-conn)
+                    (db/create-device<! {:device "FNORD"})
+                    (is (= 1 (count (db/find-device {:device "FNORD"}))))))
+
+#_(deftest test-users
   (with-transaction [t-conn db/conn]
     (jdbc/db-set-rollback-only! t-conn)
     (is (= 1 (db/create-user!
