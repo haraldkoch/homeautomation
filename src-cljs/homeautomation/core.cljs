@@ -5,18 +5,21 @@
             [goog.events :as events]
             [goog.history.EventType :as EventType]
             [markdown.core :refer [md->html]]
-            [ajax.core :refer [GET POST]])
+            [ajax.core :refer [GET POST]]
+            [homeautomation.presence :refer [presence-page]])
   (:import goog.History))
 
 (defn navbar []
   [:div.navbar.navbar-inverse.navbar-fixed-top
    [:div.container
     [:div.navbar-header
-     [:a.navbar-brand {:href "#/"} "myapp"]]
+     [:a.navbar-brand {:href "#/"} "Home Automation"]]
     [:div.navbar-collapse.collapse
      [:ul.nav.navbar-nav
       [:li {:class (when (= :home (session/get :page)) "active")}
        [:a {:href "#/"} "Home"]]
+      [:li {:class (when (= :presence (session/get :page)) "active")}
+       [:a {:href "#/presence"} "Presence"]]
       [:li {:class (when (= :about (session/get :page)) "active")}
        [:a {:href "#/about"} "About"]]]]]])
 
@@ -24,7 +27,7 @@
   [:div.container
    [:div.row
     [:div.col-md-12
-     "this is the story of homeautomation... work in progress"]]])
+     "Harald's home automation clojure playground. Beware of dragon."]]])
 
 (defn home-page []
   [:div.container
@@ -43,6 +46,7 @@
 
 (def pages
   {:home #'home-page
+   :presence #'presence-page
    :about #'about-page})
 
 (defn page []
@@ -52,11 +56,9 @@
 ;; Routes
 (secretary/set-config! :prefix "#")
 
-(secretary/defroute "/" []
-  (session/put! :page :home))
-
-(secretary/defroute "/about" []
-  (session/put! :page :about))
+(secretary/defroute "/" [] (session/put! :page :home))
+(secretary/defroute "/presence" [] (session/put! :page :presence))
+(secretary/defroute "/about" [] (session/put! :page :about))
 
 ;; -------------------------
 ;; History

@@ -26,6 +26,10 @@ SELECT users.* FROM users
 JOIN devices ON (users.id = devices.owner)
 WHERE devices.name = :device;
 
+-- name: get-devices
+-- get all devices
+SELECT * from devices;
+
 -- name: find-device
 -- find a device by MAC address
 SELECT * FROM devices
