@@ -1,7 +1,7 @@
 (ns homeautomation.mqtt
   (:require [environ.core :refer [env]]
             [clojurewerkz.machine-head.client :as mh]
-            [owntracks-receiver.db.core :as db]
+            [homeautomation.db.core :as db]
             [clojure.data.json :as json]
             [taoensso.timbre :as timbre]))
 
@@ -21,10 +21,11 @@
 (defn get-user-from-topic [t] (get (clojure.string/split t #"/") 1))
 
 (defn find-or-add-device [device]
-  (let [entry (db/find-device {:device device})])
-  (if (count entry)
-    (-> entry (first) (:id))
-    (db/create-device<! {:device device})))
+  (let [entry (db/find-device {:device device})]
+    (if (count entry)
+      (-> entry (first) (:id))
+      (db/create-device<! {:device device})))
+  )
 
 (defn handle-delivery
   [^String topic _ ^bytes payload]
