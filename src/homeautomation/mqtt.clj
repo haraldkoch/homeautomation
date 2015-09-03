@@ -24,7 +24,7 @@
 
 (defn to-map [s]
   (let [m (json/read-str s :key-fn keyword)]
-    (merge m (convert-timestamp (:read_time m)))))
+    (merge m {:read_time (convert-timestamp (:read_time m))})))
 
 (defn add-device
   [{:keys [:hostapd_mac :hostapd_clientname :hostapd_action :read_time]}]
