@@ -23,11 +23,11 @@
     (timbre/info "MQTT connected to " (env :mqtt-url))))
 
 (defn add-device
-  [{:keys [:hostapd_mac :hostapd_clientname :hostapd_action :read_time]}]
+  [{:keys [:hostapd_mac :hostapd_clientname :status :read_time]}]
   (timbre/info "add new device mac:" hostapd_mac "name:" hostapd_clientname)
   (db/create-device! {:macaddr            hostapd_mac
                       :name               hostapd_clientname
-                      :status             (if (nil? hostapd_action) "present" hostapd_action)
+                      :status             (if (nil? status) "present" status)
                       :last_status_change read_time
                       :last_seen          read_time}))
 
