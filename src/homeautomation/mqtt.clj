@@ -19,16 +19,16 @@
 (defn to-map [s] (json/read-str s :key-fn keyword))
 
 (defn add-device
-  [{:keys [:hostapd_mac :hostapd_clientname :hostapd_action :syslog_timestamp]}]
+  [{:keys [:hostapd_mac :hostapd_clientname :hostapd_action :read_time]}]
   (timbre/info "add new device mac:" hostapd_mac "name:" hostapd_clientname)
   (db/create-device! {:macaddr            hostapd_mac
                       :name               hostapd_clientname
                       :status             (if (nil? hostapd_action) "present" hostapd_action)
-                      :last_status_change syslog_timestamp
-                      :last_seen          syslog_timestamp}))
+                      :last_status_change read_time
+                      :last_seen          read_time}))
 
 (defn update-device-status
-  [{:keys [:hostapd_mac :hostapd_clientname :hostapd_action :syslog_timestamp] :as message}]
+  [{:keys [:hostapd_mac :hostapd_clientname :hostapd_action :read_time] :as message}]
   (let [device (db/find-device {:macaddr hostapd_mac})]
 
     (if (= 0 (count device))
@@ -45,11 +45,11 @@
             (timbre/info "update status for mac" hostapd_mac "from" (:status device) "to" hostapd_action)
             (db/update-device-status! {:macaddr            hostapd_mac
                                      :status             hostapd_action
-                                     :last_status_change syslog_timestamp})))
+                                     :last_status_change read_time})))
 
         (timbre/info "update seen for mac" hostapd_mac)
         (db/update-device-seen! {:macaddr   hostapd_mac
-                                 :last_seen syslog_timestamp})))))
+                                 :last_seen read_time})))))
 
 (defn handle-delivery
   [^String topic _ ^bytes payload]
