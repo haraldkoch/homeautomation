@@ -34,7 +34,8 @@
 (defn update-device-status
   [{:keys [:hostapd_mac :hostapd_clientname :status :read_time] :as message}]
   (println "upadte-device-status mac:" hostapd_mac "client" hostapd_clientname "status" status "read_time" read_time)
-  (let [device (db/find-device {:macaddr hostapd_mac})]
+  (let [devices (db/find-device {:macaddr hostapd_mac})
+        device (first devices)]
 
     (if (= 0 (count device))
       (add-device message)
