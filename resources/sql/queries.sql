@@ -15,6 +15,10 @@ WHERE id = :id;
 SELECT * FROM users
 WHERE id = :id;
 
+-- name: get-users
+-- retrieve all users
+SELECT * FROM users;
+
 -- name: delete-user!
 -- delete a user given the id
 DELETE FROM users
@@ -28,7 +32,9 @@ WHERE devices.name = :device;
 
 -- name: get-devices
 -- get all devices
-SELECT * from devices;
+SELECT d.id, d.macaddr, d.name, users.username as owner, d.status, d.last_status_change, d.last_seen
+FROM devices d
+LEFT JOIN users ON (d.owner = users.id);
 
 -- name: find-device
 -- find a device by MAC address
@@ -63,3 +69,8 @@ WHERE macaddr = :macaddr;
 UPDATE devices
 SET status = :status, last_status_change = :last_status_change
 WHERE macaddr = :macaddr;
+
+-- name: set-device-owner!
+UPDATE devices
+SET owner = (select id from users where username = :owner)
+WHERE id = :device_id;

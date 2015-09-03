@@ -43,6 +43,6 @@
   (set-parameter [v ^PreparedStatement stmt idx]
     (.setTimestamp stmt idx (java.sql.Timestamp. (.getTime v)))))
 
-(declare create-user! update-user! get-user delete-user!
+(declare create-user! update-user! get-user delete-user! get-users
          get-devices find-user-for-device find-device get-device get-devices-for-user
-         create-device! update-device-name! update-device-seen! update-device-status!)
+         create-device! update-device-name! update-device-seen! update-device-status! set-device-owner!)

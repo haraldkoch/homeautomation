@@ -7,3 +7,11 @@
                :params        params
                :handler       handler
                :error-handler error-handler}))
+
+(defn send [url params handler & [error-handler]]
+  (client/POST (str js/context url)
+               {:headers       {"Accept" "application/transit+json"
+                                "X-CSRF-Token" js/csrfToken}
+                :params        params
+                :handler       handler
+                :error-handler error-handler}))
