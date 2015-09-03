@@ -22,10 +22,6 @@
     (reset! conn c)
     (timbre/info "MQTT connected to " (env :mqtt-url))))
 
-(defn to-map [s]
-  (let [m (json/read-str s :key-fn keyword)]
-    (merge m {:read_time (convert-timestamp (:read_time m))})))
-
 (defn add-device
   [{:keys [:hostapd_mac :hostapd_clientname :hostapd_action :read_time]}]
   (timbre/info "add new device mac:" hostapd_mac "name:" hostapd_clientname)
@@ -36,7 +32,8 @@
                       :last_seen          read_time}))
 
 (defn update-device-status
-  [{:keys [:hostapd_mac :hostapd_clientname :hostapd_action :read_time] :as message}]
+  [{:keys [:hostapd_mac :hostapd_clientname :status :read_time] :as message}]
+  (println "upadte-device-status mac:" hostapd_mac "client" hostapd_clientname "status" status "read_time" read_time)
   (let [device (db/find-device {:macaddr hostapd_mac})]
 
     (if (= 0 (count device))
@@ -46,18 +43,32 @@
           (do
             (timbre/info "update name for mac" hostapd_mac "from" (:name device) "to" hostapd_clientname)
             (db/update-device-name! {:macaddr hostapd_mac
-                                   :name    hostapd_clientname})))
+                                     :name    hostapd_clientname})))
 
-        (if (and hostapd_action (not= hostapd_action (:status device)))
+        (if (and status (not= status (:status device)))
           (do
-            (timbre/info "update status for mac" hostapd_mac "from" (:status device) "to" hostapd_action)
+            (timbre/info "update status for mac" hostapd_mac "from" (:status device) "to" status)
             (db/update-device-status! {:macaddr            hostapd_mac
-                                     :status             hostapd_action
-                                     :last_status_change read_time})))
+                                       :status             status
+                                       :last_status_change read_time})))
 
         (timbre/info "update seen for mac" hostapd_mac)
         (db/update-device-seen! {:macaddr   hostapd_mac
                                  :last_seen read_time})))))
+
+(defn set-status [m]
+  (let [action (:hostapd_action m)]
+    (if action
+      (merge m {:status (cond (= action "authenticated") "present"
+                              (= action "deauthenticated") "absent"
+                              :else "unknown")})
+      m)))
+
+(defn set-read-time [m]
+  (merge m {:read_time (convert-timestamp (:read_time m))}))
+
+(defn to-map [s]
+  (json/read-str s :key-fn keyword))
 
 (defn handle-delivery
   [^String topic _ ^bytes payload]
@@ -67,7 +78,11 @@
     (try
       (do
         (timbre/info "RCV topic: " topic "message: " message)
-        (update-device-status (to-map message)))
+        (-> message
+            (to-map)
+            (set-read-time)
+            (set-status)
+            (update-device-status)))
       (catch Throwable t (timbre/error "received message" message "on topic" topic "with error" t)))))
 
 (defn start-subscriber
