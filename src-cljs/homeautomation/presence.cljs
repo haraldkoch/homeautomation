@@ -83,7 +83,7 @@
 (defn username-selection-list [device-id user]
   (println "device-id " device-id " user " user)
   [:div.form-group
-   (into [:select.form-control {:value user
+   (into [:select.form-control {:default-value user
                                 :on-change #(set-owner! device-id (.. % -target -value))}]
          (for [name (usernames)] [:option {:value name} name]))])
 
