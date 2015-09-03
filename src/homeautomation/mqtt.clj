@@ -3,9 +3,15 @@
             [clojurewerkz.machine-head.client :as mh]
             [homeautomation.db.core :as db]
             [clojure.data.json :as json]
-            [taoensso.timbre :as timbre]))
+            [taoensso.timbre :as timbre]
+            [clj-time.core :as t]
+            [clj-time.coerce :as c]
+            [clj-time.format :as f]))
 
 (defonce conn (atom nil))
+
+(def custom-formatter (:date-time f/formatters))
+(defn convert-timestamp [s] (->> s (f/parse custom-formatter) (c/to-date)))
 
 (defn connect
   []
@@ -16,7 +22,9 @@
     (reset! conn c)
     (timbre/info "MQTT connected to " (env :mqtt-url))))
 
-(defn to-map [s] (json/read-str s :key-fn keyword))
+(defn to-map [s]
+  (let [m (json/read-str s :key-fn keyword)]
+    (merge m (convert-timestamp (:read_time m)))))
 
 (defn add-device
   [{:keys [:hostapd_mac :hostapd_clientname :hostapd_action :read_time]}]
