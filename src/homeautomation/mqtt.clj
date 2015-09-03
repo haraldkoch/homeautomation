@@ -23,7 +23,7 @@
   (timbre/info "add new device mac:" hostapd_mac "name:" hostapd_clientname)
   (db/create-device! {:macaddr            hostapd_mac
                       :name               hostapd_clientname
-                      :status             hostapd_action
+                      :status             (if (nil? hostapd_action) "present" hostapd_action)
                       :last_status_change syslog_timestamp
                       :last_seen          syslog_timestamp}))
 
