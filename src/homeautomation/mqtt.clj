@@ -31,7 +31,7 @@
   [{:keys [:hostapd_mac :hostapd_clientname :hostapd_action :syslog_timestamp] :as message}]
   (let [device (db/find-device {:macaddr hostapd_mac})]
 
-    (if (nil? device)
+    (if (= 0 (count device))
       (add-device message)
       (do
         (if (not= hostapd_clientname (:name device))
