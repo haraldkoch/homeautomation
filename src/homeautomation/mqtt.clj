@@ -61,7 +61,9 @@
   (let [action (:hostapd_action m)]
     (if action
       (merge m {:status (cond (= action "authenticated") "present"
+                              (= action "assosciated") "present"
                               (= action "deauthenticated") "absent"
+                              (= action "disassosciated") "absent"
                               :else "unknown")})
       m)))
 
