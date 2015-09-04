@@ -40,6 +40,16 @@
       (timbre/error "error handling request" e#)
       (internal-server-error {:error (.getMessage e#)}))))
 
+(defn set-device-name [request]
+  (try
+    (do (db/set-device-name! (:params request))
+        (let [message (str "device name changed to " (get-in request [:params :name]))]
+          (timbre/info message)
+          message))
+    (catch Exception e#
+      (timbre/error "error handling request" e#)
+      (internal-server-error {:error (.getMessage e#)}))))
+
 (response-handler get-devices []
                   (db/get-devices))
 
@@ -49,5 +59,6 @@
            (GET "/devices" [] (get-devices))
            (POST "/add-user" request (add-user request))
            (POST "/set-device-owner" request (set-device-owner request))
+           (POST "/set-device-name" request (set-device-name request))
            (GET "/docs" [] (ok (-> "docs/docs.md" io/resource slurp))))
 

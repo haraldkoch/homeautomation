@@ -1,9 +1,7 @@
 (ns homeautomation.presence
   (:require [homeautomation.ajax :refer [fetch send]]
-            [homeautomation.misc :refer [render-table render-cell]]
+            [homeautomation.misc :refer [render-table render-cell fmt-date-recent]]
             [reagent.core :refer [atom]]
-            [reagent.session :as session]
-            [secretary.core :as secretary :include-macros true]
             [ajax.core :refer [GET POST]]))
 
 (def error (atom nil))
@@ -16,7 +14,6 @@
 (defn fetch-table [url query result error]
   (fetch url query
          #(do
-           (println url query %)
            (reset! result %))
          #(reset! error (get-in % [:resonse :error]))))
 
@@ -27,14 +24,17 @@
   (send "/add-user" @query
         #(do
           (clear-indicators)
-          (println "add-user" @query %)
           (reset! result %)
           (fetch-users))
         #(reset! error (get-in % [:response :error]))))
 
 (defn set-owner! [device-id owner]
-  (println "set-owner!" device-id owner)
   (send "/set-device-owner" {:device_id device-id :owner owner}
+        #(fetch-devices)
+        #(reset! error (get-in % [:response :error]))))
+
+(defn set-device-name! [device-id name]
+  (send "/set-device-name" {:device_id device-id :name name}
         #(fetch-devices)
         #(reset! error (get-in % [:response :error]))))
 
@@ -42,7 +42,7 @@
   [:input.form-control
    {:type        :text :value (get @data-atom param)
     :placeholder (name param)
-    :on-change   #(swap! data-atom assoc param (.-target.value %))}])
+    :on-change   #(swap! data-atom assoc param (.-value (.-target %)))}])
 
 (defn add-user-form [show-user-form form-data]
   (fn []
@@ -68,7 +68,7 @@
        [:div.row
         [:div.col-sm-10
          [:h2 "Users"]
-         [render-table @users]]
+         [render-table (->> @users (map #(dissoc % :id)))]]
         [:div.col-sm-2
          [:button.btn.btn-primary
           {:on-click #(do (clear-indicators)
@@ -81,11 +81,24 @@
   (conj (map #(:username %) @users) ""))
 
 (defn username-selection-list [device-id user]
-  (println "device-id " device-id " user " user)
   [:div.form-group
    (into [:select.form-control {:default-value user
-                                :on-change #(set-owner! device-id (.. % -target -value))}]
-         (for [name (usernames)] [:option {:value name} name]))])
+                                :on-change     #(set-owner! device-id (.-value (.-target %)))}]
+         (for [name (usernames)]
+           [:option {:value name} name]))])
+
+(defn devices-table [items]
+  [:table.table.table-striped
+   [:thead [:tr [:th "Device"] [:th "Owner"] [:th "Status"] [:th "Seen"]]]
+   (into [:tbody]
+         (for [device items]
+           [:tr
+            [:td [:div (:name device)] [:div.small (:macaddr device)]]
+            [:td [username-selection-list (:id device) (:owner device)]]
+            [:td (:status device)]
+            [:td
+             [:div (fmt-date-recent (:last_status_change device))]
+             [:div (fmt-date-recent (:last_seen device))]]]))])
 
 (defn show-devices []
   (let []
@@ -94,31 +107,43 @@
       [:div.row
        [:div.col-sm-12
         [:h2 "Devices"]
-        (let [items @devices
-              columns (keys (first items))]
+        (let [items (filter #(:name %) @devices)]
           [:div.row
            [:div.col-sm-12
-            [:table.table.table-striped
-             [:thead
-              [:tr
-               (for [column columns] ^{:key (name column)} [:th (name column)])]]
-             (into [:tbody]
-                   (for [row items]
-                     (into [:tr]
-                           (for [column columns]
-                             [:td 
-                              (if (= column :owner)
-                                (username-selection-list (:id row) (:owner row))
-                                (render-cell (get row column)))]))))]]])]])))
+            [devices-table items]]])]])))
+
+(defn device-name-field [id name]
+  [:input.form-control
+   {:type        :text :value name
+    :placeholder "device name"
+    :on-key-down #(case (.-which %)
+                   13 (set-device-name! id (.-value (.-target %)))
+                   "default")
+    :on-blur     #(set-device-name! id (.-value (.-target %)))
+    }])
+
+(defn macaddr-table [items]
+  [:table.table.table-striped
+   [:thead [:tr [:th "Device"] [:th "Name"] [:th "Status"] [:th "Seen"]]]
+   (into [:tbody]
+         (for [device items]
+           [:tr
+            [:td (:macaddr device)]
+            [:td [device-name-field (:id device) (:name device)]]
+            [:td (:status device)]
+            [:td
+             [:div (fmt-date-recent (:last_status_change device))]
+             [:div (fmt-date-recent (:last_seen device))]]]))])
 
 (defn macaddrs []
-  [:div.row
-   [:div.col-sm-12
-    [:h2 "Unknown MACs"]
+  (fn []
     [:div.row
-     [:div.col-sm-4 "00:00:00:00:00:00"]
-     [:div.col-sm-4 "present"]
-     [:div.col-sm-4 "2015-05-05 19:21:!2"]]]])
+     [:div.col-sm-12
+      [:h2 "New MAC Addresses"]
+      (let [items (filter #(nil? (:name %)) @devices)]
+        [:div.row
+         [:div.col-sm-12
+          [macaddr-table items]]])]]))
 
 (defn status-bar []
   (fn []

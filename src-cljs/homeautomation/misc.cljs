@@ -19,6 +19,19 @@
 (defn fmt-date [d]
   (->> d (c/from-date) (t/to-default-time-zone) (f/unparse (f/formatters :date))))
 
+(def time-only (f/formatters :hour-minute))
+(def day-with-time (f/formatter "EEE HH:mm"))
+(def month-day-time (f/formatter "MMM-dd HH:mm"))
+(def full-date-time (f/formatters :date-hour-minute))
+
+(defn fmt-date-recent [d]
+  (let [datetime (-> d (c/from-date) (t/to-default-time-zone))
+        i (t/interval datetime (t/now))]
+    (cond (< (t/in-days i) 0) (f/unparse time-only datetime)
+          (< (t/in-days i) 7) (f/unparse day-with-time datetime)
+          (< (t/in-years i) 0) (f/unparse month-day-time datetime)
+          :else (f/unparse full-date-time datetime))))
+
 (defn escape-html [s]
   (clojure.string/escape s
                          {"&"  "&amp;"
@@ -41,7 +54,6 @@
       :else (str v))))
 
 (defn render-table [items]
-  (println "items" items)
   (let [columns (keys (first items))]
     [:div.row
      [:div.col-sm-12

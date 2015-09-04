@@ -45,4 +45,4 @@
 
 (declare create-user! update-user! get-user delete-user! get-users
          get-devices find-user-for-device find-device get-device get-devices-for-user
-         create-device! update-device-name! update-device-seen! update-device-status! set-device-owner!)
+         create-device! update-device-name! update-device-seen! update-device-status! set-device-owner! set-device-name!)

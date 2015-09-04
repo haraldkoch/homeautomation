@@ -62,7 +62,7 @@ WHERE macaddr = :macaddr;
 
 -- name: update-device-seen!
 UPDATE devices
-SET last_seen = :last_seen
+SET last_seen = :last_seen, status = 'present'
 WHERE macaddr = :macaddr;
 
 -- name: update-device-status!
@@ -74,3 +74,13 @@ WHERE macaddr = :macaddr;
 UPDATE devices
 SET owner = (select id from users where username = :owner)
 WHERE id = :device_id;
+
+-- name: set-device-name!
+UPDATE devices
+SET name = :name
+WHERE id = :device_id;
+
+-- name: mark-devices-idle!
+UPDATE devices
+SET status = 'idle'
+WHERE status = 'present' AND last_seen < TIMESTAMPADD(MINUTE,-30,NOW());
