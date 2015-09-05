@@ -6,7 +6,13 @@
             [taoensso.timbre :as timbre]
             [clj-time.core :as t]
             [clj-time.coerce :as c]
-            [clj-time.format :as f]))
+            [clj-time.format :as f])
+  (:import [java.util Date]))
+
+(defn- write-date [x ^PrintWriter out]
+  (.print out (str x)))
+
+(extend java.util.Date json/JSONWriter {:-write write-date})
 
 (defonce conn (atom nil))
 
