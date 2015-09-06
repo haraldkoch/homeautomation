@@ -28,7 +28,7 @@
               {:username            (env :mqtt-user)
                :password            (env :mqtt-pass)
                :keep-alive-interval 60
-               :clean-session       false}))
+               :clean-session       (env :dev)}))
 
 ; FIXME: might be better to re-use existing conn instead of creating a new on on connection faiulre?
 (defn connect
