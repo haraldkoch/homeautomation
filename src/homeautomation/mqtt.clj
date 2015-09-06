@@ -46,8 +46,15 @@
 
 (declare connection-lost)
 
+; all of this event processing code runs from the MQTT library callback. We can't *send* a message while we're still
+; receiving one, so use a future to send the message from a separate thread. This is MQTT, so we don't really care
+; if the message gets sent or not ;)
 (defn notify-event [event]
-  (mh/publish @conn "presence/event" (json/write-str event)))
+  (future
+    (let [payload (json/write-str event)]
+      (timbre/debug "sending presence event" payload)
+      (mh/publish @conn "presence/event" payload 0)
+      (timbre/debug "presence event sent!"))))
 
 (defn add-device
   [{:keys [:hostapd_mac :hostapd_clientname :status :read_time]}]
