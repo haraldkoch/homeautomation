@@ -58,7 +58,7 @@
                                                  :last_seen newdate})
                         (is (= [{:macaddr            "00:00:00:00:00:00"
                                  :name               "FNORD"
-                                 :status             "present"
+                                 :status             "absent"
                                  :last_status_change newdate
                                  :last_seen          newdate
                                  :owner              nil}]
