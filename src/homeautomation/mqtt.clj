@@ -19,6 +19,7 @@
 
 (def custom-formatter (:date-time f/formatters))
 (defn convert-timestamp [s] (->> s (f/parse custom-formatter) (c/to-date)))
+(defn hour-minute [s] (->> s (c/from-date) (f/unparse (:hour-minute f/formatters))))
 
 (defonce conn (atom nil))
 
@@ -50,14 +51,14 @@
 
 (defn add-device
   [{:keys [:hostapd_mac :hostapd_clientname :status :read_time]}]
-  (let [logmessage (str "new device " hostapd_mac "/" hostapd_clientname " at " read_time)]
+  (let [logmessage (str "new device " hostapd_clientname " at " (hour-minute read_time))]
     (timbre/info logmessage)
     (db/create-device! {:macaddr            hostapd_mac
                         :name               hostapd_clientname
                         :status             (if (nil? status) "present" status)
                         :last_status_change read_time
                         :last_seen          read_time})
-    (notify-event {:event "NEW" :macaddr hostapd_mac :name hostapd_clientname :timestamp read_time :message logmessage})))
+    (notify-event {:event "NEW" :macaddr hostapd_mac :name hostapd_clientname :message logmessage})))
 
 (defn update-device-status
   [{:keys [:hostapd_mac :hostapd_clientname :status :read_time] :as message}]
@@ -81,7 +82,7 @@
                                        :status             status
                                        :last_status_change read_time})
             (notify-event {:event   "PRESENCE" :macaddr hostapd_mac :name hostapd_clientname :status status
-                           :message (str hostapd_clientname " is now " status " at " read_time)})))
+                           :message (str hostapd_clientname " is now " status " at " (hour-minute read_time))})))
 
         (timbre/info "update seen for mac" hostapd_mac)
         (db/update-device-seen! {:macaddr   hostapd_mac
