@@ -96,14 +96,12 @@
                                  :last_seen read_time})))))
 
 (defn set-status [m]
-  (let [action (:hostapd_action m)]
-    (if action
-      (merge m {:status (cond (= action "authenticated") "present"
-                              (= action "associated") "present"
-                              (= action "deauthenticated") "absent"
-                              (= action "disassociated") "absent"
-                              :else "unknown")})
-      m)))
+  (let [action (:hostapd_action m)
+        status (case action
+                 ("authenticated" "associated") "present"
+                 ("deauthenticated" "disassociated") "absent"
+                 "present")]                                ; we may want to change this to 'unknown' later
+    (merge m {:status status})))
 
 (defn set-read-time [m]
   (merge m {:read_time (convert-timestamp (:read_time m))}))
