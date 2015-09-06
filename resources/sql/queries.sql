@@ -62,7 +62,7 @@ WHERE macaddr = :macaddr;
 
 -- name: update-device-seen!
 UPDATE devices
-SET last_seen = :last_seen, status = 'present'
+SET last_seen = :last_seen
 WHERE macaddr = :macaddr;
 
 -- name: update-device-status!
