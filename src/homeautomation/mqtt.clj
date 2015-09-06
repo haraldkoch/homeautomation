@@ -21,13 +21,16 @@
 (defn convert-timestamp [s] (->> s (f/parse custom-formatter) (c/to-date)))
 
 (defonce conn (atom nil))
-(defonce clientid (mh/generate-id))
 
 (defn do-connect []
-  (mh/connect (env :mqtt-url) clientid
-              {:username (env :mqtt-user)
-               :password (env :mqtt-pass)}))
+  (mh/connect (env :mqtt-url)
+              (env :mqtt-clientid)
+              {:username            (env :mqtt-user)
+               :password            (env :mqtt-pass)
+               :keep-alive-interval 60
+               :clean-session       false}))
 
+; FIXME: might be better to re-use existing conn instead of creating a new on on connection faiulre?
 (defn connect
   []
   (while (or (nil? @conn) (not (mh/connected? @conn)))
