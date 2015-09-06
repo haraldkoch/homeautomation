@@ -4,29 +4,43 @@
             [homeautomation.db.core :as db]
             [clojure.data.json :as json]
             [taoensso.timbre :as timbre]
-            [clj-time.core :as t]
             [clj-time.coerce :as c]
             [clj-time.format :as f])
-  (:import [java.util Date] [java.io PrintWriter]))
+  (:import [java.util Date]
+           [java.io PrintWriter]
+           [org.eclipse.paho.client.mqttv3 MqttException]))
+
+; TODO - separate the MQTT generic logic with the presence processing logic
 
 (defn- write-date [x ^PrintWriter out]
   (.print out (str x)))
 
-(extend java.util.Date json/JSONWriter {:-write write-date})
-
-(defonce conn (atom nil))
+(extend Date json/JSONWriter {:-write write-date})
 
 (def custom-formatter (:date-time f/formatters))
 (defn convert-timestamp [s] (->> s (f/parse custom-formatter) (c/to-date)))
 
+(defonce conn (atom nil))
+(defonce clientid (mh/generate-id))
+
+(defn do-connect []
+  (mh/connect (env :mqtt-url) clientid
+              {:username (env :mqtt-user)
+               :password (env :mqtt-pass)}))
+
 (defn connect
   []
-  (let [id (mh/generate-id)
-        c (mh/connect (env :mqtt-url) id
-                      {:username (env :mqtt-user)
-                       :password (env :mqtt-pass)})]
-    (reset! conn c)
-    (timbre/info "MQTT connected to " (env :mqtt-url))))
+  (while (or (nil? @conn) (not (mh/connected? @conn)))
+    (try
+      (do
+        (reset! conn (do-connect))
+        (timbre/info "MQTT connected to " (env :mqtt-url)))
+      (catch MqttException e
+        (do
+          (timbre/error e "cannot connect to" (env :mqtt-url))
+          (Thread/sleep 15000))))))
+
+(declare connection-lost)
 
 (defn notify-event [event]
   (mh/publish @conn "presence/event" (json/write-str event)))
@@ -63,8 +77,8 @@
             (db/update-device-status! {:macaddr            hostapd_mac
                                        :status             status
                                        :last_status_change read_time})
-            (notify-event {:event "PRESENCE" :macaddr hostapd_mac :name hostapd_clientname :status status
-                          :message (str hostapd_clientname " is now " status " at " read_time)})))
+            (notify-event {:event   "PRESENCE" :macaddr hostapd_mac :name hostapd_clientname :status status
+                           :message (str hostapd_clientname " is now " status " at " read_time)})))
 
         (timbre/info "update seen for mac" hostapd_mac)
         (db/update-device-seen! {:macaddr   hostapd_mac
@@ -105,10 +119,14 @@
   []
   (do
     (connect)
-    (mh/subscribe @conn {"hostapd" 1} handle-delivery {:on-connection-lost connect})))
+    (mh/subscribe @conn {"hostapd" 1} handle-delivery {:on-connection-lost connection-lost})))
 
 (defn stop-subscriber
   []
   (do
     (mh/disconnect-and-close @conn)
     (reset! conn nil)))
+
+(defn connection-lost [reason]
+  (timbre/info reason "connection lost - reconnecting...")
+  (start-subscriber))
