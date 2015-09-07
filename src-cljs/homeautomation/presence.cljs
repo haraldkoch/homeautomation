@@ -1,6 +1,6 @@
 (ns homeautomation.presence
   (:require [homeautomation.ajax :refer [fetch send]]
-            [homeautomation.misc :refer [render-table render-cell fmt-date-recent]]
+            [homeautomation.misc :refer [render-table render-cell fmt-date-recent fmt-date]]
             [reagent.core :refer [atom]]
             [ajax.core :refer [GET POST]]))
 
@@ -97,8 +97,10 @@
             [:td [username-selection-list (:id device) (:owner device)]]
             [:td (:status device)]
             [:td
-             [:div (fmt-date-recent (:last_status_change device))]
-             [:div (fmt-date-recent (:last_seen device))]]]))])
+             [:div {:title (fmt-date (:last_status_change device))}
+              (fmt-date-recent (:last_status_change device))]
+             [:div {:title (fmt-date (:last_seen device))}
+              (fmt-date-recent (:last_seen device))]]]))])
 
 (defn show-devices []
   (let []
@@ -132,8 +134,10 @@
             [:td [device-name-field (:id device) (:name device)]]
             [:td (:status device)]
             [:td
-             [:div (fmt-date-recent (:last_status_change device))]
-             [:div (fmt-date-recent (:last_seen device))]]]))])
+             [:div {:title (fmt-date (:last-status_change device))}
+              (fmt-date-recent (:last_status_change device))]
+             [:div {:title (fmt-date (:last-seen device))}
+              (fmt-date-recent (:last_seen device))]]]))])
 
 (defn macaddrs []
   (fn []
