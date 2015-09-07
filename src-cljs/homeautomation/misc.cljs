@@ -4,13 +4,6 @@
             [cljs-time.format :as f]
             ))
 
-; MSFT is very strange
-(def TICKS_AT_EPOCH_LDAP 116444736000000000)
-(def TICKS_PER_SECOND 10000)
-
-(defn cvt-ticks-to-date [t]
-  (-> t (- TICKS_AT_EPOCH_LDAP) (/ TICKS_PER_SECOND) (c/from-long) (c/to-date)))
-
 (def my-formatter (f/formatter "yyyy-MM-dd HH:mm:ss"))
 (defn fmt-time [t]
   (->> t (c/from-date) (t/to-default-time-zone) (f/unparse my-formatter)))
@@ -27,9 +20,9 @@
 (defn fmt-date-recent [d]
   (let [datetime (-> d (c/from-date) (t/to-default-time-zone))
         i (t/interval datetime (t/now))]
-    (cond (< (t/in-days i) 0) (f/unparse time-only datetime)
+    (cond (< (t/in-days i) 1) (f/unparse time-only datetime)
           (< (t/in-days i) 7) (f/unparse day-with-time datetime)
-          (< (t/in-years i) 0) (f/unparse month-day-time datetime)
+          (< (t/in-years i) 1) (f/unparse month-day-time datetime)
           :else (f/unparse full-date-time datetime))))
 
 (defn escape-html [s]
