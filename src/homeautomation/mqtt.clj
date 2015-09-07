@@ -4,6 +4,7 @@
             [homeautomation.db.core :as db]
             [clojure.data.json :as json]
             [taoensso.timbre :as timbre]
+            [clj-time.core :as t]
             [clj-time.coerce :as c]
             [clj-time.format :as f])
   (:import [java.util Date]
@@ -17,9 +18,13 @@
 
 (extend Date json/JSONWriter {:-write write-date})
 
-(def custom-formatter (:date-time f/formatters))
-(defn convert-timestamp [s] (->> s (f/parse custom-formatter) (c/to-date)))
-(defn hour-minute [s] (->> s (c/from-date) (f/unparse (:hour-minute f/formatters))))
+(f/unparse (f/formatter-local "HH:mm") (t/to-time-zone (c/from-date (Date.)) (t/default-time-zone)))
+
+(defn convert-timestamp [s] (->> s (f/parse (:date-time f/formatters)) (c/to-date)))
+
+; need a fn because ->> puts the date at the end and we need it in the middle
+(defn to-default-timezone [d] (t/to-time-zone d (t/default-time-zone)))
+(defn hour-minute [s] (->> s (c/from-date) (to-default-timezone) (f/unparse  (f/formatter-local "HH:mm"))))
 
 (defonce conn (atom nil))
 
