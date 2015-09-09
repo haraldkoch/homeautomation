@@ -1,0 +1,1 @@
+ALTER TABLE  `devices` ADD  `ignore` BOOLEAN NOT NULL DEFAULT FALSE AFTER  `owner` ;

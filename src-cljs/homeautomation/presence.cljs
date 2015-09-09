@@ -38,6 +38,11 @@
         #(fetch-devices)
         #(reset! error (get-in % [:response :error]))))
 
+(defn set-ignore! [device-id ignore]
+  (send "/set-device-ignore" {:device_id device-id :ignore ignore}
+        #(fetch-devices)
+        #(reset! error (get-in % [:response :error]))))
+
 (defn input-field [param data-atom]
   [:input.form-control
    {:type        :text :value (get @data-atom param)
@@ -87,14 +92,21 @@
          (for [name (usernames)]
            [:option {:value name} name]))])
 
+(defn ignore-checkbox [device-id ignore]
+  [:div.form-group
+   [:input.form-control
+    {:type      :checkbox :defaultChecked ignore
+     :on-change #(set-ignore! device-id (.-checked (.-target %)))}]])
+
 (defn devices-table [items]
   [:table.table.table-striped
-   [:thead [:tr [:th "Device"] [:th "Owner"] [:th "Status"] [:th "Seen"]]]
+   [:thead [:tr [:th "Device"] [:th "Owner"] [:th "Ignore"] [:th "Status"] [:th "Seen"]]]
    (into [:tbody]
          (for [device items]
            [:tr
             [:td [:div (:name device)] [:div.small (:macaddr device)]]
             [:td [username-selection-list (:id device) (:owner device)]]
+            [:td [ignore-checkbox (:id device) (:ignore device)]]
             [:td (:status device)]
             [:td
              [:div {:title (fmt-date (:last_status_change device))}
@@ -126,12 +138,13 @@
 
 (defn macaddr-table [items]
   [:table.table.table-striped
-   [:thead [:tr [:th "Device"] [:th "Name"] [:th "Status"] [:th "Seen"]]]
+   [:thead [:tr [:th "Device"] [:th "Name"] [:th "Ignore"] [:th "Status"] [:th "Seen"]]]
    (into [:tbody]
          (for [device items]
            [:tr
             [:td (:macaddr device)]
             [:td [device-name-field (:id device) (:name device)]]
+            [:td (:ignore device)]
             [:td (:status device)]
             [:td
              [:div {:title (fmt-date (:last-status_change device))}

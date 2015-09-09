@@ -14,7 +14,7 @@
      (try
        (ok (do ~@body))
        (catch Exception e#
-         (timbre/error "error handling request" e#)
+         (timbre/error e# "error handling request")
          (internal-server-error {:error (.getMessage e#)})))))
 
 (response-handler get-users []
@@ -27,7 +27,7 @@
           (timbre/info message)
           message))
     (catch Exception e#
-      (timbre/error "error handling request" e#)
+      (timbre/error e# "error handling request")
       (internal-server-error {:error (.getMessage e#)}))))
 
 (defn set-device-owner [request]
@@ -37,7 +37,19 @@
           (timbre/info message)
           message))
     (catch Exception e#
-      (timbre/error "error handling request" e#)
+      (timbre/error e# "error handling request")
+      (internal-server-error {:error (.getMessage e#)}))))
+
+(defn set-device-ignore [request]
+  (try
+    (do (db/set-device-ignore! (:params request))
+        (let [ignored? (get-in request [:params :ignore])
+              device-id (get-in request [:params :device-id])
+              message (str "device " device-id " is now "  (if ignored? "ignored" "NOT ignored"))]
+          (timbre/info message)
+          message))
+    (catch Exception e#
+      (timbre/error e# "error handling request")
       (internal-server-error {:error (.getMessage e#)}))))
 
 (defn set-device-name [request]
@@ -47,7 +59,7 @@
           (timbre/info message)
           message))
     (catch Exception e#
-      (timbre/error "error handling request" e#)
+      (timbre/error e# "error handling request")
       (internal-server-error {:error (.getMessage e#)}))))
 
 (response-handler get-devices []
@@ -60,5 +72,6 @@
            (POST "/add-user" request (add-user request))
            (POST "/set-device-owner" request (set-device-owner request))
            (POST "/set-device-name" request (set-device-name request))
+           (POST "/set-device-ignore" request (set-device-ignore request))
            (GET "/docs" [] (ok (-> "docs/docs.md" io/resource slurp))))
 

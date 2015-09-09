@@ -11,7 +11,7 @@
 
 ; need a fn because ->> puts the date at the end and we need it in the middle
 (defn to-default-timezone [d] (t/to-time-zone d (t/default-time-zone)))
-(defn hour-minute [s] (->> s (c/from-date) (to-default-timezone) (f/unparse  (f/formatter-local "HH:mm"))))
+(defn hour-minute [s] (->> s (c/from-date) (to-default-timezone) (f/unparse (f/formatter-local "HH:mm"))))
 
 (defn notify-event [event]
   (mqtt/send-message "presence/event" event))
@@ -48,8 +48,9 @@
             (db/update-device-status! {:macaddr            hostapd_mac
                                        :status             status
                                        :last_status_change read_time})
-            (notify-event {:event   "PRESENCE" :macaddr hostapd_mac :name hostapd_clientname :status status
-                           :message (str hostapd_clientname " is now " status " at " (hour-minute read_time))})))
+            (if (not (:ignore device))
+              (notify-event {:event   "PRESENCE" :macaddr hostapd_mac :name hostapd_clientname :status status
+                             :message (str hostapd_clientname " is now " status " at " (hour-minute read_time))}))))
 
         (timbre/info "update seen for mac" hostapd_mac)
         (db/update-device-seen! {:macaddr   hostapd_mac

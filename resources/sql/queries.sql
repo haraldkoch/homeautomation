@@ -32,7 +32,7 @@ WHERE devices.name = :device;
 
 -- name: get-devices
 -- get all devices
-SELECT d.id, d.macaddr, d.name, users.username as owner, d.status, d.last_status_change, d.last_seen
+SELECT d.id, d.macaddr, d.name, users.username as owner, d.ignore, d.status, d.last_status_change, d.last_seen
 FROM devices d
 LEFT JOIN users ON (d.owner = users.id);
 
@@ -40,11 +40,6 @@ LEFT JOIN users ON (d.owner = users.id);
 -- find a device by MAC address
 SELECT * FROM devices
 WHERE macaddr = :macaddr;
-
--- name: get-device
--- get a device by ID
-SELECT * FROM devices
-WHERE id = :id;
 
 -- name: get-devices-for-user
 SELECT * FROM devices
@@ -78,6 +73,11 @@ WHERE id = :device_id;
 -- name: set-device-name!
 UPDATE devices
 SET name = :name
+WHERE id = :device_id;
+
+-- name: set-device-ignore!
+UPDATE devices
+SET `ignore` = :ignore
 WHERE id = :device_id;
 
 -- name: mark-devices-idle!
