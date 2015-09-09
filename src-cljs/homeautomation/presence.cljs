@@ -95,14 +95,22 @@
 (defn ignore-checkbox [device-id ignore]
   [:div.form-group
    [:input.form-control
-    {:type      :checkbox :defaultChecked ignore
+    {:type      :checkbox :checked ignore :defaultChecked ignore
      :on-change #(set-ignore! device-id (.-checked (.-target %)))}]])
+
+(defn device-sort [devicea deviceb]
+  (let [ignore (compare (:ignore devicea) (:ignore deviceb))
+        seen (compare (:last_seen deviceb) (:last_seen devicea))
+        name (compare (:name devicea) (:name deviceb))]
+    (cond (not= 0 ignore) ignore
+          (not= 0 seen) seen
+          :else name)))
 
 (defn devices-table [items]
   [:table.table.table-striped
    [:thead [:tr [:th "Device"] [:th "Owner"] [:th "Ignore"] [:th "Status"] [:th "Seen"]]]
    (into [:tbody]
-         (for [device items]
+         (for [device (sort device-sort items)]
            [:tr
             [:td [:div (:name device)] [:div.small (:macaddr device)]]
             [:td [username-selection-list (:id device) (:owner device)]]
