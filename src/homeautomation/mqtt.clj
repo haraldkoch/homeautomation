@@ -1,36 +1,24 @@
 (ns homeautomation.mqtt
   (:require [environ.core :refer [env]]
             [clojurewerkz.machine-head.client :as mh]
-            [homeautomation.db.core :as db]
             [clojure.data.json :as json]
-            [taoensso.timbre :as timbre]
-            [clj-time.core :as t]
-            [clj-time.coerce :as c]
-            [clj-time.format :as f])
+            [taoensso.timbre :as timbre])
   (:import [java.util Date]
            [java.io PrintWriter]
            [org.eclipse.paho.client.mqttv3 MqttException]))
 
-; TODO - separate the MQTT generic logic with the presence processing logic
-
 (defn- write-date [x ^PrintWriter out]
   (.print out (str x)))
-
 (extend Date json/JSONWriter {:-write write-date})
-
-(f/unparse (f/formatter-local "HH:mm") (t/to-time-zone (c/from-date (Date.)) (t/default-time-zone)))
-
-(defn convert-timestamp [s] (->> s (f/parse (:date-time f/formatters)) (c/to-date)))
-
-; need a fn because ->> puts the date at the end and we need it in the middle
-(defn to-default-timezone [d] (t/to-time-zone d (t/default-time-zone)))
-(defn hour-minute [s] (->> s (c/from-date) (to-default-timezone) (f/unparse  (f/formatter-local "HH:mm"))))
 
 (defonce conn (atom nil))
 
+(defn get-client-id []
+  (if (env :dev) (mh/generate-id) (env :mqtt-clientid)))
+
 (defn do-connect []
   (mh/connect (env :mqtt-url)
-              (env :mqtt-clientid)
+              (get-client-id)
               {:username            (env :mqtt-user)
                :password            (env :mqtt-pass)
                :keep-alive-interval 60
@@ -51,68 +39,18 @@
 
 (declare connection-lost)
 
-; all of this event processing code runs from the MQTT library callback. We can't *send* a message while we're still
-; receiving one, so use a future to send the message from a separate thread. This is MQTT, so we don't really care
-; if the message gets sent or not ;)
-(defn notify-event [event]
-  (future
-    (let [payload (json/write-str event)]
-      (timbre/debug "sending presence event" payload)
-      (mh/publish @conn "presence/event" payload 0)
-      (timbre/debug "presence event sent!"))))
-
-(defn add-device
-  [{:keys [:hostapd_mac :hostapd_clientname :status :read_time]}]
-  (let [logmessage (str "new device " hostapd_clientname " at " (hour-minute read_time))]
-    (timbre/info logmessage)
-    (db/create-device! {:macaddr            hostapd_mac
-                        :name               hostapd_clientname
-                        :status             (if (nil? status) "present" status)
-                        :last_status_change read_time
-                        :last_seen          read_time})
-    (notify-event {:event "NEW" :macaddr hostapd_mac :name hostapd_clientname :message logmessage})))
-
-(defn update-device-status
-  [{:keys [:hostapd_mac :hostapd_clientname :status :read_time] :as message}]
-  (timbre/debug "update-device-status mac:" hostapd_mac "client" hostapd_clientname "status" status "read_time" read_time)
-  (let [devices (db/find-device {:macaddr hostapd_mac})
-        device (first devices)]
-
-    (if (= 0 (count device))
-      (add-device message)
-      (do
-        (if (not= hostapd_clientname (:name device))
-          (do
-            (timbre/info "update name for mac" hostapd_mac "from" (:name device) "to" hostapd_clientname)
-            (db/update-device-name! {:macaddr hostapd_mac
-                                     :name    hostapd_clientname})))
-
-        (if (and status (not= status (:status device)))
-          (do
-            (timbre/info "update status for mac" hostapd_mac "from" (:status device) "to" status)
-            (db/update-device-status! {:macaddr            hostapd_mac
-                                       :status             status
-                                       :last_status_change read_time})
-            (notify-event {:event   "PRESENCE" :macaddr hostapd_mac :name hostapd_clientname :status status
-                           :message (str hostapd_clientname " is now " status " at " (hour-minute read_time))})))
-
-        (timbre/info "update seen for mac" hostapd_mac)
-        (db/update-device-seen! {:macaddr   hostapd_mac
-                                 :last_seen read_time})))))
-
-(defn set-status [m]
-  (let [action (:hostapd_action m)
-        status (case action
-                 ("authenticated" "associated") "present"
-                 ("deauthenticated" "disassociated") "absent"
-                 "present")]                                ; we may want to change this to 'unknown' later
-    (merge m {:status status})))
-
-(defn set-read-time [m]
-  (merge m {:read_time (convert-timestamp (:read_time m))}))
-
 (defn to-map [s]
   (json/read-str s :key-fn keyword))
+
+(defonce callbacks (atom {}))
+
+(defn add-callback [t f]
+  (swap! callbacks assoc t f))
+
+(defn get-callback
+  [t]
+  ; fixme: need to handle wildcards
+  (get @callbacks t))
 
 (defn handle-delivery
   [^String topic _ ^bytes payload]
@@ -124,18 +62,32 @@
         (timbre/info "RCV topic: " topic "message: " message)
         (-> message
             (to-map)
-            (set-read-time)
-            (set-status)
-            (update-device-status)))
-      (catch Throwable t (timbre/error "received message" message "on topic" topic "with error" t)))))
+            ((get-callback topic))))
+      (catch Throwable t (timbre/error t "while processing message" message "on topic" topic)))))
 
-(defn start-subscriber
+; this fn can be called from the MQTT library callback.
+; We can't *send* a message while we're still
+; receiving one, so use a future to send the message from a separate thread.
+; This is MQTT, so we don't really care
+; if the message is delivered.
+
+(defn send-message [topic message]
+  (future
+    (let [payload (json/write-str message)]
+      (timbre/debug "sending: topic" topic "message" payload)
+      (mh/publish @conn topic payload 0)
+      (timbre/debug "message sent!"))))
+
+(defn start-subscribers
   []
   (do
     (connect)
-    (mh/subscribe @conn {"hostapd" 1} handle-delivery {:on-connection-lost connection-lost})))
+    (doseq [entry @callbacks]
+      (timbre/info "starting subscriber for topic" (key entry))
+      (mh/subscribe @conn {(key entry) 1} handle-delivery {:on-connection-lost connection-lost}))
+    ))
 
-(defn stop-subscriber
+(defn stop-subscribers
   []
   (do
     (mh/disconnect-and-close @conn)
@@ -143,4 +95,4 @@
 
 (defn connection-lost [reason]
   (timbre/info reason "connection lost - reconnecting...")
-  (start-subscriber))
+  (start-subscribers))

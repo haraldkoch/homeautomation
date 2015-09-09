@@ -2,6 +2,7 @@
   (:require [homeautomation.handler :refer [app init destroy]]
             [immutant.web :as immutant]
             [homeautomation.db.migrations :as migrations]
+            [homeautomation.presence :as presence]
             [clojure.tools.nrepl.server :as nrepl]
             [taoensso.timbre :as timbre]
             [environ.core :refer [env]]
@@ -54,11 +55,12 @@
 (defn stop-app []
   (stop-nrepl)
   (stop-http-server)
-  (mqtt/stop-subscriber))
+  (mqtt/stop-subscribers))
 
 (defn start-app [[port]]
   (.addShutdownHook (Runtime/getRuntime) (Thread. stop-app))
-  (mqtt/start-subscriber)
+  (presence/init)
+  (mqtt/start-subscribers)
   (start-nrepl)
   (start-http-server (http-port port))
   (timbre/info "server started on port:" (:port @http-server)))
