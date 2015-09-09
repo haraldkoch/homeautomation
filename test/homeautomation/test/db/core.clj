@@ -36,6 +36,7 @@
                       (is (= [{:macaddr            "00:00:00:00:00:00"
                                :name               "FNORD"
                                :status             "present"
+                               :ignore             false
                                :last_status_change date
                                :last_seen          date
                                :owner              nil}]
@@ -49,6 +50,7 @@
                         (is (= [{:macaddr            "00:00:00:00:00:00"
                                  :name               "FNORD"
                                  :status             "absent"
+                                 :ignore             false
                                  :last_status_change newdate
                                  :last_seen          date
                                  :owner              nil}]
@@ -59,6 +61,7 @@
                         (is (= [{:macaddr            "00:00:00:00:00:00"
                                  :name               "FNORD"
                                  :status             "absent"
+                                 :ignore             false
                                  :last_status_change newdate
                                  :last_seen          newdate
                                  :owner              nil}]
