@@ -4,7 +4,8 @@
             [compojure.core :refer [defroutes GET POST]]
             [ring.util.http-response :refer :all]
             [taoensso.timbre :as timbre]
-            [clojure.java.io :as io]))
+            [clojure.java.io :as io]
+            [homeautomation.presence :as presence]))
 
 (defn home-page []
   (layout/render "home.html"))
@@ -33,6 +34,7 @@
 (defn set-device-owner [request]
   (try
     (do (db/set-device-owner! (:params request))
+        (presence/update-user-presence (get-in request [:params :owner]))
         (let [message (str "device now owned by " (get-in request [:params :owner]))]
           (timbre/info message)
           message))
@@ -44,9 +46,13 @@
   (try
     (do (db/set-device-ignore! (:params request))
         (let [ignored? (get-in request [:params :ignore])
-              device-id (get-in request [:params :device-id])
-              message (str "device " device-id " is now "  (if ignored? "ignored" "NOT ignored"))]
+              device-id (get-in request [:params :device_id])
+              device (first (db/get-device {:id device-id}))
+              user (first (db/get-user {:id (:owner device)}))
+              username (:username user)
+              message (str "device " {:name device} " is now "  (if ignored? "ignored" "NOT ignored"))]
           (timbre/info message)
+          (presence/update-user-presence username)
           message))
     (catch Exception e#
       (timbre/error e# "error handling request")

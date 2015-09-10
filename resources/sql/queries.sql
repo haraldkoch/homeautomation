@@ -15,6 +15,11 @@ WHERE id = :id;
 SELECT * FROM users
 WHERE id = :id;
 
+-- name: get-user-by-name
+-- retrieve a user given username.
+SELECT * FROM users
+WHERE username = :username;
+
 -- name: get-users
 -- retrieve all users
 SELECT * FROM users;
@@ -24,11 +29,18 @@ SELECT * FROM users;
 DELETE FROM users
 WHERE id = :id;
 
+-- name: set-user-presence!
+-- set the presence status of a user
+UPDATE users SET presence = :presence WHERE id = :id;
+
 -- name: find-user-for-device
 -- locates the user record for a given device
 SELECT users.* FROM users
 JOIN devices ON (users.id = devices.owner)
 WHERE devices.name = :device;
+
+-- name: get-device
+SELECT * FROM devices WHERE id = :id;
 
 -- name: get-devices
 -- get all devices
@@ -43,7 +55,7 @@ WHERE macaddr = :macaddr;
 
 -- name: get-devices-for-user
 SELECT * FROM devices
-WHERE owner = :owner;
+WHERE owner = (select id from users where username = :owner);
 
 -- name: create-device!
 INSERT INTO devices
