@@ -69,7 +69,7 @@
             (if (not (:ignore device)) (update-user-presence (:username (first (db/get-user {:id (:owner device)})))))
 
             (if (not (:ignore device))
-              (notify-event {:event   "PRESENCE" :macaddr hostapd_mac :name hostapd_clientname :status status
+              (notify-event {:event   "STATUS" :macaddr hostapd_mac :name hostapd_clientname :status status
                              :message (str hostapd_clientname " is now " status " at " (hour-minute read_time))}))))
 
         (timbre/info "update seen for mac" hostapd_mac)
