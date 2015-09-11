@@ -6,7 +6,8 @@
             [goog.history.EventType :as EventType]
             [markdown.core :refer [md->html]]
             [ajax.core :refer [GET POST]]
-            [homeautomation.presence :refer [presence-page]])
+            [homeautomation.presence :refer [presence-page fetch-users users]]
+            [homeautomation.misc :refer [render-table]])
   (:import goog.History))
 
 (defn navbar []
@@ -29,25 +30,24 @@
     [:div.col-md-12
      "Harald's home automation clojure playground. Beware of dragon."]]])
 
+(defn show-users []
+  (fetch-users)
+  (fn []
+    [:div.row
+     [:div.col-sm-12
+      [:h2 "Users"]
+      [render-table (->> @users (map #(dissoc % :id)))]]]))
+
 (defn home-page []
   [:div.container
    [:div.jumbotron
-    [:h1 "Welcome to homeautomation"]
-    [:p "Time to start building your site!"]
-    [:p [:a.btn.btn-primary.btn-lg {:href "http://luminusweb.net"} "Learn more »"]]]
-   [:div.row
-    [:div.col-md-12
-     [:h2 "Welcome to ClojureScript"]]]
-   (when-let [docs (session/get :docs)]
-     [:div.row
-      [:div.col-md-12
-       [:div {:dangerouslySetInnerHTML
-              {:__html (md->html docs)}}]]])])
+    [:h1 "Harald's House"]
+    [show-users]]])
 
 (def pages
-  {:home #'home-page
+  {:home     #'home-page
    :presence #'presence-page
-   :about #'about-page})
+   :about    #'about-page})
 
 (defn page []
   [(pages (session/get :page))])
@@ -65,11 +65,11 @@
 ;; must be called after routes have been defined
 (defn hook-browser-navigation! []
   (doto (History.)
-        (events/listen
-          EventType/NAVIGATE
-          (fn [event]
-              (secretary/dispatch! (.-token event))))
-        (.setEnabled true)))
+    (events/listen
+      EventType/NAVIGATE
+      (fn [event]
+        (secretary/dispatch! (.-token event))))
+    (.setEnabled true)))
 
 ;; -------------------------
 ;; Initialize app
