@@ -1,6 +1,7 @@
 (ns homeautomation.mqtt
   (:require [environ.core :refer [env]]
             [clojurewerkz.machine-head.client :as mh]
+            [clojurewerkz.machine-head.durability :refer [new-memory-persister new-file-persister]]
             [clojure.data.json :as json]
             [taoensso.timbre :as timbre])
   (:import [java.util Date]
@@ -16,9 +17,13 @@
 (defn get-client-id []
   (if (env :dev) (mh/generate-id) (env :mqtt-clientid)))
 
+(defn get-persister []
+  (if (env :dev) (new-memory-persister) (new-file-persister)))
+
 (defn do-connect []
   (mh/connect (env :mqtt-url)
               (get-client-id)
+              (get-persister)
               {:username            (env :mqtt-user)
                :password            (env :mqtt-pass)
                :keep-alive-interval 60
