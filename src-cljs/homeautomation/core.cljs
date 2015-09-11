@@ -11,11 +11,16 @@
   (:import goog.History))
 
 (defn navbar []
-  [:div.navbar.navbar-inverse.navbar-fixed-top
-   [:div.container
+  [:nav.navbar.navbar-inverse.navbar-fixed-top
+   [:div.container-fluid
     [:div.navbar-header
+     [:button.navbar-toggle.collapsed {:data-toggle "collapse" :data-target "navbar-collapse-1" :aria-expanded "false"}
+      [:span.sr-only "Toggle Navigation"]
+      [:span.icon-bar]
+      [:span.icon-bar]
+      [:span.icon-bar]]
      [:a.navbar-brand {:href "#/"} "Home Automation"]]
-    [:div.navbar-collapse.collapse
+    [:div#navbar-collapse-1.navbar-collapse.collapse
      [:ul.nav.navbar-nav
       [:li {:class (when (= :home (session/get :page)) "active")}
        [:a {:href "#/"} "Home"]]
