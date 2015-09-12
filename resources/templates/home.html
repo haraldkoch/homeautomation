@@ -19,10 +19,6 @@
     {% style "/assets/bootstrap/css/bootstrap-theme.min.css" %}
     {% style "/css/screen.css" %}
 
-    {% script "/assets/jquery/jquery.min.js" %}
-    {% script "/assets/bootstrap/js/bootstrap.min.js" %}
-    {% script "/assets/bootstrap/js/collapse.js" %}
-
     <script type="text/javascript">
         var context = "{{servlet-context}}";
         var csrfToken = "{{csrf-token}}";
@@ -34,6 +30,9 @@
     {% else %}
       {% script "/js/app.js" %}
     {% endif %}
+  <footer class="footer">
+      <p><a href="http://www.luminusweb.net/">Powered by Luminus</a></p>
+  </footer>
   </body>
 </html>
 
