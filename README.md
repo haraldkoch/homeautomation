@@ -1,20 +1,27 @@
 # homeautomation
 
+Powered by [Luminus](http://www.luminusweb.net/).
+
+This is a place for me to play with home automation technologies using
+Clojure. There are many exciting technologies floating around right now;
+[MQTT][mqtt], [homA][homa], [openHAB][openhab], [Node-Red][nodered],
+[Raspberry Pis][rpi], and so many more.
+
+Right now I'm experimenting with mobile-based presence. On my home network
+is an [ELK][elk] stack collecting log data, including the logs from my
+[OpenWRT][openwrt]-based network access point. The AP logs contain status
+updates for WiFi clients. I use [logstash][logstash] to extract relevant
+information from those log messages and publish them to an MQTT topic.
+
+This application then receives those status updates, tracks device
+presence, and turns device presence into user presence events, also
+distributed via MQTT. Back in the network, there is a process that
+receives events over MQTT and publishes them to my phone using
+[Instapush][instapush].
+
 TODO:
-* new mac address appears on network
-  * assign device name
-  - associate with a user
-- new macaddr + device appears on network
-- existing macaddr + new device name appears
 
-User should see:
-- presence grid (click through to see devices; click through to see event history?)
-- devices with no user assigned
-- devices with no name assigned
-
-Devices should have last seen and last status change
-
-FIXME
+-  [ ] use retained messages to publish a current presence for each known user
 
 ## Prerequisites
 
@@ -30,4 +37,16 @@ To start a web server for the application, run:
 
 ## License
 
-Copyright © 2015 FIXME
+Copyright © 2015 C. Harald Koch.
+
+Distributed under the [MIT License](http://opensource.org/licenses/MIT).
+
+[mqtt]: <http://mqtt.org/>
+[homa]: <https://github.com/binarybucks/homA>
+[openhab]: <http://www.openhab.org/>
+[nodered]: <http://nodered.org/>
+[rpi]: <https://www.raspberrypi.org/>
+[elk]: <https://www.elastic.co/products>
+[openwrt]: <https://openwrt.org/>
+[logstash]: <https://www.elastic.co/products/logstash>
+[instapush]: <https://instapush.im/>
