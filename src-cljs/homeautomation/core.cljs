@@ -12,15 +12,18 @@
 
 (defn navbar []
   [:nav.navbar.navbar-inverse.navbar-fixed-top
-   [:div.container-fluid
+   [:div.container
     [:div.navbar-header
-     [:button.navbar-toggle.collapsed {:data-toggle "collapse" :data-target "#navbar-collapse-1" :aria-expanded "false"}
+     [:button.navbar-toggle.collapsed {:data-toggle   "collapse"
+                                       :data-target   "#my-navbar"
+                                       :aria-expanded "false"
+                                       :aria-controls "navbar"}
       [:span.sr-only "Toggle Navigation"]
       [:span.icon-bar]
       [:span.icon-bar]
       [:span.icon-bar]]
      [:a.navbar-brand {:href "#/"} "Home Automation"]]
-    [:div#navbar-collapse-1.navbar-collapse.collapse
+    [:div#my-navbar.navbar-collapse.collapse
      [:ul.nav.navbar-nav
       [:li {:class (when (= :home (session/get :page)) "active")}
        [:a {:href "#/"} "Home"]]
