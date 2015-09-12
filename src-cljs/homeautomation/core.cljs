@@ -14,7 +14,7 @@
   [:nav.navbar.navbar-inverse.navbar-fixed-top
    [:div.container-fluid
     [:div.navbar-header
-     [:button.navbar-toggle.collapsed {:data-toggle "collapse" :data-target "navbar-collapse-1" :aria-expanded "false"}
+     [:button.navbar-toggle.collapsed {:data-toggle "collapse" :data-target "#navbar-collapse-1" :aria-expanded "false"}
       [:span.sr-only "Toggle Navigation"]
       [:span.icon-bar]
       [:span.icon-bar]
