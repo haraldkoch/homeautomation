@@ -25,7 +25,9 @@
                         :status             (if (nil? status) "present" status)
                         :last_status_change read_time
                         :last_seen          read_time})
-    (notify-event {:event "NEW" :macaddr hostapd_mac :name hostapd_clientname :message logmessage})))
+    (notify-event {:event   "NEW"
+                   :device  (first (db/find-device hostapd_mac))
+                   :message logmessage})))
 
 (defn update-user-presence [username]
   (timbre/debug "update-user-presence" username "called")
@@ -41,7 +43,8 @@
       (when (not= presence new-presence)
         (timbre/info "updating presence for" username "from" presence "to" new-presence)
         (db/set-user-presence! {:id (:id user) :presence new-presence})
-        (notify-event {:event "PRESENCE" :username username :presence new-presence :message (str username " is now " new-presence)})))))
+        (notify-event {:event   "PRESENCE" :user user :presence new-presence
+                       :message (str (:first_name user) " is now " new-presence)})))))
 
 (defn update-device-status
   [{:keys [:hostapd_mac :hostapd_clientname :status :read_time] :as message}]
@@ -65,7 +68,7 @@
 
           (when-not (:ignore device)
             (update-user-presence (:username (first (db/get-user {:id (:owner device)}))))
-            (notify-event {:event   "STATUS" :macaddr hostapd_mac :name hostapd_clientname :status status
+            (notify-event {:event   "STATUS" :device device :status status
                            :message (str hostapd_clientname " is now " status " at " (hour-minute read_time))})))
 
         (timbre/info "update seen for mac" hostapd_mac)
