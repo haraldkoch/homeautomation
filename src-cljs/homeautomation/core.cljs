@@ -48,14 +48,21 @@
   (fn []
     [:div.row
      [:div.col-sm-12
-      [:h2 "Users"]
-      [render-table (->> @users (map #(dissoc % :id)))]]]))
+      [:table.table.table-striped
+       (into [:tbody]
+             (for [user @users]
+               [:tr
+                [:td (:first_name user) [:span.small " (" (:username user) ")"]]
+                [:td (:presence user)]]))]]]))
 
 (defn home-page []
   [:div.container
-   [:div.jumbotron
-    [:h1 "Harald's House"]
-    [show-users]]])
+   [:div.row
+    [:div.col-xs-12
+     [:h1 "Harald's House"]
+     [show-users]]]
+   [:footer
+    [:p.small "Powered by " [:a {:href "http://www.luminusweb.net/"} "Luminus"]]]])
 
 (def pages
   {:home     #'home-page

@@ -48,18 +48,17 @@
 
 (defn render-table [items]
   (let [columns (keys (first items))]
-    [:div.row
-     [:div.col-sm-12
-      [:table.table.table-striped
-       [:thead
-        [:tr
-         (for [column columns] ^{:key (name column)} [:th (name column)])]]
-       (into [:tbody]
-             (for [row items]
-               (into [:tr]
-                     (for [column columns]
-                       [:td
-                        (render-cell (get row column))]))))]]]))
+    [:div.table-responsive
+     [:table.table.table-striped.table-condensed
+      [:thead
+       [:tr
+        (for [column columns] ^{:key (name column)} [:th (name column)])]]
+      (into [:tbody]
+            (for [row items]
+              (into [:tr]
+                    (for [column columns]
+                      [:td
+                       (render-cell (get row column))]))))]]))
 
 (defn spinner []
   [:div.spinner

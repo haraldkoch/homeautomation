@@ -107,7 +107,7 @@
           :else name)))
 
 (defn devices-table [items]
-  [:table.table.table-striped
+  [:table.table.table-striped.table-condensed
    [:thead [:tr [:th "Device"] [:th "Owner"] [:th "Ignore"] [:th "Status"] [:th "Seen"]]]
    (into [:tbody]
          (for [device (sort device-sort items)]
@@ -130,9 +130,7 @@
        [:div.col-sm-12
         [:h2 "Devices"]
         (let [items (filter #(:name %) @devices)]
-          [:div.row
-           [:div.col-sm-12
-            [devices-table items]]])]])))
+          [devices-table items])]])))
 
 (defn device-name-field [id name]
   [:input.form-control
@@ -145,7 +143,7 @@
     }])
 
 (defn macaddr-table [items]
-  [:table.table.table-striped
+  [:table.table.table-striped.table-condensed
    [:thead [:tr [:th "Device"] [:th "Name"] [:th "Ignore"] [:th "Status"] [:th "Seen"]]]
    (into [:tbody]
          (for [device items]
@@ -166,9 +164,7 @@
      [:div.col-sm-12
       [:h2 "New MAC Addresses"]
       (let [items (filter #(nil? (:name %)) @devices)]
-        [:div.row
-         [:div.col-sm-12
-          [macaddr-table items]]])]]))
+        [macaddr-table items])]]))
 
 (defn status-bar []
   (fn []
