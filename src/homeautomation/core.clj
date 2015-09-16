@@ -1,12 +1,12 @@
 (ns homeautomation.core
   (:require [homeautomation.handler :refer [app init destroy]]
+            [homeautomation.mqtt :as mqtt]
+            [homeautomation.presence :as presence]
             [immutant.web :as immutant]
             [homeautomation.db.migrations :as migrations]
-            [homeautomation.presence :as presence]
             [clojure.tools.nrepl.server :as nrepl]
             [taoensso.timbre :as timbre]
-            [environ.core :refer [env]]
-	    [homeautomation.mqtt :as mqtt])
+            [environ.core :refer [env]])
   (:gen-class))
 
 (defonce nrepl-server (atom nil))
@@ -55,7 +55,8 @@
 (defn stop-app []
   (stop-nrepl)
   (stop-http-server)
-  (mqtt/stop-subscribers))
+  (mqtt/stop-subscribers)
+  (shutdown-agents))
 
 (defn start-app [[port]]
   (.addShutdownHook (Runtime/getRuntime) (Thread. stop-app))

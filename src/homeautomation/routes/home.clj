@@ -1,11 +1,11 @@
 (ns homeautomation.routes.home
   (:require [homeautomation.layout :as layout]
             [homeautomation.db.core :as db]
+            [homeautomation.presence :as presence]
             [compojure.core :refer [defroutes GET POST]]
             [ring.util.http-response :refer :all]
             [taoensso.timbre :as timbre]
-            [clojure.java.io :as io]
-            [homeautomation.presence :as presence]))
+            [clojure.java.io :as io]))
 
 (defn home-page []
   (layout/render "home.html"))

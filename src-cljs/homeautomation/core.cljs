@@ -10,14 +10,20 @@
             [homeautomation.misc :refer [render-table]])
   (:import goog.History))
 
+(defn nav-link [uri title page collapsed?]
+  [:li {:class (when (= page (session/get :page)) "active")}
+   [:a {:href uri
+        :on-click #(reset! collapsed? true)}
+    title]])
+
 (defn navbar []
-  (let [collapsed? (atom false)]
+  (let [collapsed? (atom true)]
     (fn []
       [:nav.navbar.navbar-inverse.navbar-fixed-top
        [:div.container
         [:div.navbar-header
          [:button.navbar-toggle
-          {:class         (when @collapsed? "collapsed")
+          {:class         (when-not @collapsed? "collapsed")
            :data-toggle   "collapse"
            :aria-expanded @collapsed?
            :aria-controls "navbar"
@@ -28,14 +34,11 @@
           [:span.icon-bar]]
          [:a.navbar-brand {:href "#/"} "Home Automation"]]
         [:div.navbar-collapse.collapse
-         (when @collapsed? {:class "in"})
+         (when-not @collapsed? {:class "in"})
          [:ul.nav.navbar-nav
-          [:li {:class (when (= :home (session/get :page)) "active")}
-           [:a {:href "#/"} "Home"]]
-          [:li {:class (when (= :presence (session/get :page)) "active")}
-           [:a {:href "#/presence"} "Presence"]]
-          [:li {:class (when (= :about (session/get :page)) "active")}
-           [:a {:href "#/about"} "About"]]]]]])))
+          [nav-link "#/" "Home" :home collapsed?]
+          [nav-link "#/presence" "Presence" :presence collapsed?]
+          [nav-link "#/about" "About" :about collapsed?]]]]])))
 
 (defn about-page []
   [:div.container

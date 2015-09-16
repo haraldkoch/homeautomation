@@ -18,7 +18,7 @@
 ; find device when device does exist
 ; find-device-for-user when user doesn't exist
 (deftest new-device
-  (with-transaction [t-conn db/conn]
+  (with-transaction [t-conn db/*conn*]
                     (jdbc/db-set-rollback-only! t-conn)
                     (is (= 0 (count (db/find-device {:macaddr "00:00:00:00:00:00"}))))))
 
@@ -26,7 +26,7 @@
   (let [now (Calendar/getInstance)
         _ (.set now Calendar/MILLISECOND 0)
         date (Date. (.getTimeInMillis now))]
-    (with-transaction [t-conn db/conn]
+    (with-transaction [t-conn db/*conn*]
                       (jdbc/db-set-rollback-only! t-conn)
                       (db/create-device! {:macaddr            "00:00:00:00:00:00"
                                           :name               "FNORD"

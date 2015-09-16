@@ -7,9 +7,9 @@
             BatchUpdateException
             PreparedStatement]))
 
-(defonce ^:dynamic conn (atom nil))
+(defonce ^:dynamic *conn* (atom nil))
 
-(conman/bind-connection conn "sql/queries.sql")
+(conman/bind-connection *conn* "sql/queries.sql")
 
 (def pool-spec
   {:adapter    :mysql
@@ -20,13 +20,13 @@
 
 (defn connect! []
   (conman/connect!
-   conn
+    *conn*
    (assoc
      pool-spec
      :jdbc-url (env :database-url))))
 
 (defn disconnect! []
-  (conman/disconnect! conn))
+  (conman/disconnect! *conn*))
 
 (defn to-date [sql-date]
   (-> sql-date (.getTime) (java.util.Date.)))

@@ -4,7 +4,8 @@
             [environ.core :refer [env]]
             [selmer.middleware :refer [wrap-error-page]]
             [prone.middleware :refer [wrap-exceptions]]
-            [ring-ttl-session.core :refer [ttl-memory-store]]
+            [ring.middleware.flash :refer [wrap-flash]]
+            [immutant.web.middleware :refer [wrap-session]]
             [ring.middleware.reload :as reload]
             [ring.middleware.webjars :refer [wrap-webjars]]
             [ring.middleware.defaults :refer [site-defaults wrap-defaults]]
@@ -61,9 +62,11 @@
       wrap-dev
       wrap-formats
       wrap-webjars
+      wrap-flash
+      (wrap-session {:cookie-attrs {:http-only true}})
       (wrap-defaults
         (-> site-defaults
             (assoc-in [:security :anti-forgery] false)
-            (assoc-in  [:session :store] (ttl-memory-store (* 60 30)))))
+            (dissoc :session)))
       wrap-context
       wrap-internal-error))
