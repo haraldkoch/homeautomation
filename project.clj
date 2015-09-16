@@ -35,7 +35,7 @@
                  [org.immutant/web "2.1.0"]
 
                  ; local additions
-                 [com.andrewmcveigh/cljs-time "0.3.11"]
+                 [com.andrewmcveigh/cljs-time "0.3.13"]
                  [clojurewerkz/machine_head "1.0.0-beta9"]]
 
   :min-lein-version "2.0.0"

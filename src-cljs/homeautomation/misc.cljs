@@ -10,7 +10,7 @@
 
 
 (defn fmt-date [d]
-  (println d) (when d (->> d (c/from-date) (t/to-default-time-zone) (f/unparse (f/formatters :date)))))
+  (when d (->> d (c/from-date) (t/to-default-time-zone) (f/unparse (f/formatters :date)))))
 
 (def time-only (f/formatters :hour-minute))
 (def day-with-time (f/formatter "EEE HH:mm"))
