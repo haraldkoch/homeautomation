@@ -1,5 +1,7 @@
 # homeautomation
 
+[![Build Status](https://travis-ci.org/haraldkoch/homeautomation.svg?branch=master)](https://travis-ci.org/haraldkoch/homeautomation)
+
 Powered by [Luminus](http://www.luminusweb.net/).
 
 This is a place for me to play with home automation technologies using
