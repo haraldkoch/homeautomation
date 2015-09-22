@@ -27,9 +27,10 @@
               {:username            (env :mqtt-user)
                :password            (env :mqtt-pass)
                :keep-alive-interval 60
-               :clean-session       (env :dev)}))
+               ; the machine-head client checks this field for nil. NIL IS FALSE, SILLY PEOPLE!
+               :clean-session       (boolean (env :dev))}))
 
-; FIXME: might be better to re-use existing conn instead of creating a new on on connection faiulre?
+; FIXME: might be better to re-use existing conn instead of creating a new on on connection failure?
 (defn connect
   []
   (while (or (nil? @conn) (not (mh/connected? @conn)))
