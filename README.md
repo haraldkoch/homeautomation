@@ -24,6 +24,7 @@ receives events over MQTT and publishes them to my phone using
 TODO:
 
 -  [ ] use retained messages to publish a current presence for each known user
+-  [ ] do not replace user-entered name with empty name from logstash parser
 
 ## Prerequisites
 
