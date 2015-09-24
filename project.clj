@@ -1,10 +1,10 @@
 (defproject homeautomation "0.1.0-SNAPSHOT"
 
-  :description "FIXME: write description"
-  :url "http://example.com/FIXME"
+  :description "Harald plays with home automation"
+  :url "https://github.com/haraldkoch/homeautomation"
 
   :dependencies [[org.clojure/clojure "1.7.0"]
-                 [selmer "0.9.1"]
+                 [selmer "0.9.2"]
                  [com.taoensso/timbre "4.1.1"]
                  [com.taoensso/tower "3.0.2"]
                  [markdown-clj "0.9.74"]
@@ -18,16 +18,16 @@
                  [metosin/ring-http-response "0.6.5"]
                  [bouncer "0.3.3"]
                  [prone "0.8.2"]
-                 [org.clojure/tools.nrepl "0.2.10"]
+                 [org.clojure/tools.nrepl "0.2.11"]
                  [org.webjars/bootstrap "3.3.5"]
                  [org.webjars/jquery "2.1.4"]
                  [migratus "0.8.4"]
-                 [conman "0.1.8"]
+                 [conman "0.1.9"]
                  [mysql/mysql-connector-java "5.1.34"]
                  [org.clojure/clojurescript "1.7.122" :scope "provided"]
                  [org.clojure/tools.reader "0.9.2"]
                  [reagent "0.5.1"]
-                 [reagent-forms "0.5.9"]
+                 [reagent-forms "0.5.11"]
                  [reagent-utils "0.1.5"]
                  [secretary "1.2.3"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
@@ -47,7 +47,8 @@
 
   :plugins [[lein-environ "1.0.1"]
             [migratus-lein "0.1.7"]
-            [lein-cljsbuild "1.0.6"]]
+            [lein-cljsbuild "1.1.0"]
+	    [lein-kibit "0.1.2"]]
   :clean-targets ^{:protect false} [:target-path [:cljsbuild :builds :app :compiler :output-dir] [:cljsbuild :builds :app :compiler :output-to]]
   :cljsbuild
   {:builds
@@ -55,9 +56,7 @@
     {:source-paths ["src-cljs"]
      :compiler
      {:output-to "resources/public/js/app.js"
-      :output-dir "resources/public/js/out"
       :externs ["react/externs/react.js"]
-      :optimizations :none
       :pretty-print true}}}}
   
   :profiles
@@ -77,14 +76,13 @@
    :project/dev  {:dependencies [[ring/ring-mock "0.3.0"]
                                  [ring/ring-devel "1.4.0"]
                                  [pjstadig/humane-test-output "0.7.0"]
-                                 [org.clojure/tools.nrepl "0.2.10"]
-                                 [lein-figwheel "0.3.9"]
+                                 [lein-figwheel "0.4.0"]
                                  [mvxcvi/puget "0.8.1"]]
-                  :plugins [[lein-figwheel "0.3.9"]]
+                  :plugins [[lein-figwheel "0.4.0"]]
                    :cljsbuild
                    {:builds
                     {:app
-                     {:compiler {:source-map true} :source-paths ["env/dev/cljs"]}}} 
+                     {:source-paths ["env/dev/cljs"] :compiler {:source-map true}}}}
                   
                   :figwheel
                   {:http-server-root "public"
