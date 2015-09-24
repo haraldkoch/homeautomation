@@ -37,8 +37,8 @@
           devices (db/get-devices-for-user {:owner username})
           present (for [device devices :when (= (:status device) "present")] true)
           new-presence (cond
-                         (= (count devices) 0) "UNKNOWN"
-                         (> (count present) 0) "HOME"
+                         (zero? (count devices)) "UNKNOWN"
+                         (pos? (count present)) "HOME"
                          :else "AWAY")]
       (when (not= presence new-presence)
         (timbre/info "updating presence for" username "from" presence "to" new-presence)
@@ -52,7 +52,7 @@
   (let [devices (db/find-device {:macaddr hostapd_mac})
         device (first devices)]
 
-    (if (= 0 (count device))
+    (if (zero? (count device))
       (add-device message)
       (do
         (when (not= hostapd_clientname (:name device))
