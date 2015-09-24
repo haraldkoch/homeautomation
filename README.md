@@ -1,6 +1,7 @@
-# homeautomation
+[![Build Status](https://travis-ci.org/haraldkoch/homeautomation.svg?branch=master)](https://travis-ci.org/haraldkoch/homeautomation)
+[![Dependencies Status](http://jarkeeper.com/haraldkoch/homeautomation/status.png)](http://jarkeeper.com/haraldkoch/homeautomation)
 
-[![Build Status](https://travis-ci.org/haraldkoch/homeautomation.svg?branch=master)](https://travis-ci.org/haraldkoch/homeautomation) [![Dependencies Status](http://jarkeeper.com/haraldkoch/homeautomation/status.png)](http://jarkeeper.com/haraldkoch/homeautomation)
+# homeautomation
 
 Powered by [Luminus](http://www.luminusweb.net/).
 
