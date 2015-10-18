@@ -1,5 +1,6 @@
 [![Build Status](https://travis-ci.org/haraldkoch/homeautomation.svg?branch=master)](https://travis-ci.org/haraldkoch/homeautomation)
 [![Dependencies Status](http://jarkeeper.com/haraldkoch/homeautomation/status.png)](http://jarkeeper.com/haraldkoch/homeautomation)
+[![Coverage Status](https://coveralls.io/repos/haraldkoch/homeautomation/badge.svg?branch=master&service=github)](https://coveralls.io/github/haraldkoch/homeautomation?branch=master)
 
 # homeautomation
 
