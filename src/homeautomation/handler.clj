@@ -1,14 +1,13 @@
 (ns homeautomation.handler
   (:require [compojure.core :refer [defroutes routes wrap-routes]]
+            [homeautomation.config :refer [defaults]]
             [homeautomation.layout :refer [error-page]]
             [homeautomation.routes.home :refer [home-routes]]
             [homeautomation.middleware :as middleware]
-            [homeautomation.db.core :as db]
+            [clojure.tools.logging :as log]
             [compojure.route :as route]
-            [taoensso.timbre :as timbre]
-            [taoensso.timbre.appenders.3rd-party.rotor :as rotor]
-            [selmer.parser :as parser]
-            [environ.core :refer [env]]))
+            [environ.core :refer [env]]
+            [mount.core :as mount]))
 
 (defn init
   "init will be called once when
@@ -16,28 +15,20 @@
    an app server such as Tomcat
    put any initialization code here"
   []
-
-  (timbre/merge-config!
-    {:level     (if (env :dev) :trace :info)
-     :appenders {:rotor (rotor/rotor-appender
-                          {:path "homeautomation.log"
-                           :max-size (* 512 1024)
-                           :backlog 10})}})
-
-  (if (env :dev) (parser/cache-off!))
-  (db/connect!)
-  (timbre/info (str
-                 "\n-=[homeautomation started successfully"
-                 (when (env :dev) " using the development profile")
-                 "]=-")))
+  (when-let [config (:log-config env)]
+    (org.apache.log4j.PropertyConfigurator/configure config))
+  (doseq [component (:started (mount/start))]
+    (log/info component "started"))
+  ((:init defaults)))
 
 (defn destroy
   "destroy will be called when your application
    shuts down, put any clean up code here"
   []
-  (timbre/info "homeautomation is shutting down...")
-  (db/disconnect!)
-  (timbre/info "shutdown complete!"))
+  (log/info "homeautomation is shutting down...")
+  (doseq [component (:stopped (mount/stop))]
+    (log/info component "stopped"))
+  (log/info "shutdown complete!"))
 
 (def app-routes
   (routes

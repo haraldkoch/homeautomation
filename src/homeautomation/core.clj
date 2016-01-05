@@ -5,7 +5,7 @@
             [immutant.web :as immutant]
             [homeautomation.db.migrations :as migrations]
             [clojure.tools.nrepl.server :as nrepl]
-            [taoensso.timbre :as timbre]
+            [clojure.tools.logging :as log]
             [environ.core :refer [env]])
   (:gen-class))
 
@@ -26,16 +26,16 @@
   "Start a network repl for debugging when the :nrepl-port is set in the environment."
   []
   (if @nrepl-server
-    (timbre/error "nREPL is already running!")
+    (log/error "nREPL is already running!")
     (when-let [port (env :nrepl-port)]
       (try
         (->> port
              (parse-port)
              (nrepl/start-server :port)
              (reset! nrepl-server))
-        (timbre/info "nREPL server started on port" port)
+        (log/info "nREPL server started on port" port)
         (catch Throwable t
-          (timbre/error t "failed to start nREPL"))))))
+          (log/error t "failed to start nREPL"))))))
 
 (defn http-port [port]
   (parse-port (or port (env :port) 3000)))
@@ -64,10 +64,12 @@
   (mqtt/start-subscribers)
   (start-nrepl)
   (start-http-server (http-port port))
-  (timbre/info "server started on port:" (:port @http-server)))
+  (log/info "server started on port:" (:port @http-server)))
 
 (defn -main [& args]
   (cond
-    (some #{"migrate" "rollback"} args) (migrations/migrate args)
-    :else (start-app args)))
+    (some #{"migrate" "rollback"} args)
+    (do (migrations/migrate args) (System/exit 0))
+    :else
+    (start-app args)))
   

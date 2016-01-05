@@ -1,16 +1,14 @@
 (ns homeautomation.middleware
   (:require [homeautomation.layout :refer [*app-context* error-page]]
-            [taoensso.timbre :as timbre]
+            [clojure.tools.logging :as log]
             [environ.core :refer [env]]
-            [selmer.middleware :refer [wrap-error-page]]
-            [prone.middleware :refer [wrap-exceptions]]
             [ring.middleware.flash :refer [wrap-flash]]
             [immutant.web.middleware :refer [wrap-session]]
-            [ring.middleware.reload :as reload]
             [ring.middleware.webjars :refer [wrap-webjars]]
             [ring.middleware.defaults :refer [site-defaults wrap-defaults]]
             [ring.middleware.anti-forgery :refer [wrap-anti-forgery]]
-            [ring.middleware.format :refer [wrap-restful-format]])
+            [ring.middleware.format :refer [wrap-restful-format]]
+            [homeautomation.config :refer [defaults]])
   (:import [javax.servlet ServletContext]))
 
 (defn wrap-context [handler]
@@ -33,18 +31,10 @@
     (try
       (handler req)
       (catch Throwable t
-        (timbre/error t)
+        (log/error t)
         (error-page {:status 500
                      :title "Something very bad has happened!"
                      :message "We've dispatched a team of highly trained gnomes to take care of the problem."})))))
-
-(defn wrap-dev [handler]
-  (if (env :dev)
-    (-> handler
-        reload/wrap-reload
-        wrap-error-page
-        wrap-exceptions)
-    handler))
 
 (defn wrap-csrf [handler]
   (wrap-anti-forgery
@@ -58,8 +48,7 @@
   (wrap-restful-format handler {:formats [:json-kw :transit-json :transit-msgpack]}))
 
 (defn wrap-base [handler]
-  (-> handler
-      wrap-dev
+  (-> ((:middleware defaults) handler)
       wrap-formats
       wrap-webjars
       wrap-flash

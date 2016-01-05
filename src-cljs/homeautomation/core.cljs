@@ -3,7 +3,7 @@
             [reagent.session :as session]
             [secretary.core :as secretary :include-macros true]
             [goog.events :as events]
-            [goog.history.EventType :as EventType]
+            [goog.history.EventType :as HistoryEventType]
             [markdown.core :refer [md->html]]
             [ajax.core :refer [GET POST]]
             [homeautomation.presence :refer [presence-page fetch-users users]]
@@ -88,11 +88,11 @@
 ;; must be called after routes have been defined
 (defn hook-browser-navigation! []
   (doto (History.)
-    (events/listen
-      EventType/NAVIGATE
-      (fn [event]
-        (secretary/dispatch! (.-token event))))
-    (.setEnabled true)))
+        (events/listen
+          HistoryEventType/NAVIGATE
+          (fn [event]
+              (secretary/dispatch! (.-token event))))
+        (.setEnabled true)))
 
 ;; -------------------------
 ;; Initialize app
