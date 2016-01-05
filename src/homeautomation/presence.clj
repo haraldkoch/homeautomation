@@ -2,6 +2,7 @@
   (:require [environ.core :refer [env]]
             [homeautomation.db.core :as db]
             [taoensso.timbre :as timbre]
+            [clojure.string :refer [blank?]]
             [clj-time.core :as t]
             [clj-time.coerce :as c]
             [clj-time.format :as f]
@@ -35,7 +36,7 @@
     (let [user (first (db/get-user-by-name {:username username}))
           presence (:presence user)
           devices (db/get-devices-for-user {:owner username})
-          present (for [device devices :when (= (:status device) "present")] true)
+          present (for [device devices :when (and (not (:ignore device)) (= (:status device) "present"))] true)
           new-presence (cond
                          (zero? (count devices)) "UNKNOWN"
                          (pos? (count present)) "HOME"
@@ -55,7 +56,7 @@
     (if (zero? (count device))
       (add-device message)
       (do
-        (when (not= hostapd_clientname (:name device))
+        (when (and (not (blank? hostapd_clientname)) (not= hostapd_clientname (:name device)))
           (timbre/info "update name for mac" hostapd_mac "from" (:name device) "to" hostapd_clientname)
           (db/update-device-name! {:macaddr hostapd_mac
                                    :name    hostapd_clientname}))
