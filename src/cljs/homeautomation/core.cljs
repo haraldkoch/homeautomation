@@ -1,44 +1,36 @@
 (ns homeautomation.core
-  (:require [reagent.core :as reagent :refer [atom]]
+  (:require [reagent.core :as r]
             [reagent.session :as session]
             [secretary.core :as secretary :include-macros true]
             [goog.events :as events]
             [goog.history.EventType :as HistoryEventType]
             [markdown.core :refer [md->html]]
+            [homeautomation.ajax :refer [load-interceptors!]]
             [ajax.core :refer [GET POST]]
             [homeautomation.presence :refer [presence-page fetch-users users]]
             [homeautomation.misc :refer [render-table]])
   (:import goog.History))
 
 (defn nav-link [uri title page collapsed?]
-  [:li {:class (when (= page (session/get :page)) "active")}
-   [:a {:href uri
-        :on-click #(reset! collapsed? true)}
-    title]])
+  [:li.nav-item
+   {:class (when (= page (session/get :page)) "active")}
+   [:a.nav-link
+    {:href uri
+     :on-click #(reset! collapsed? true)} title]])
 
 (defn navbar []
-  (let [collapsed? (atom true)]
+  (let [collapsed? (r/atom true)]
     (fn []
-      [:nav.navbar.navbar-inverse.navbar-fixed-top
-       [:div.container
-        [:div.navbar-header
-         [:button.navbar-toggle
-          {:class         (when-not @collapsed? "collapsed")
-           :data-toggle   "collapse"
-           :aria-expanded @collapsed?
-           :aria-controls "navbar"
-           :on-click      #(swap! collapsed? not)}
-          [:span.sr-only "Toggle Navigation"]
-          [:span.icon-bar]
-          [:span.icon-bar]
-          [:span.icon-bar]]
-         [:a.navbar-brand {:href "#/"} "Home Automation"]]
-        [:div.navbar-collapse.collapse
-         (when-not @collapsed? {:class "in"})
-         [:ul.nav.navbar-nav
-          [nav-link "#/" "Home" :home collapsed?]
-          [nav-link "#/presence" "Presence" :presence collapsed?]
-          [nav-link "#/about" "About" :about collapsed?]]]]])))
+      [:nav.navbar.navbar-light.bg-faded
+       [:button.navbar-toggler.hidden-sm-up
+        {:on-click #(swap! collapsed? not)} "☰"]
+       [:div.collapse.navbar-toggleable-xs
+        (when-not @collapsed? {:class "in"})
+        [:a.navbar-brand {:href "#/"} "homeautomation"]
+        [:ul.nav.navbar-nav
+         [nav-link "#/" "Home" :home collapsed?]
+	 [nav-link "#/presence" "Presence" :presence collapsed?]
+         [nav-link "#/about" "About" :about collapsed?]]]])))
 
 (defn about-page []
   [:div.container
@@ -79,9 +71,14 @@
 ;; Routes
 (secretary/set-config! :prefix "#")
 
-(secretary/defroute "/" [] (session/put! :page :home))
-(secretary/defroute "/presence" [] (session/put! :page :presence))
-(secretary/defroute "/about" [] (session/put! :page :about))
+(secretary/defroute "/" []
+  (session/put! :page :home))
+
+(secretary/defroute "/presence" []
+  (session/put! :page :presence))
+
+(secretary/defroute "/about" []
+  (session/put! :page :about))
 
 ;; -------------------------
 ;; History
@@ -100,10 +97,11 @@
   (GET (str js/context "/docs") {:handler #(session/put! :docs %)}))
 
 (defn mount-components []
-  (reagent/render [#'navbar] (.getElementById js/document "navbar"))
-  (reagent/render [#'page] (.getElementById js/document "app")))
+  (r/render [#'navbar] (.getElementById js/document "navbar"))
+  (r/render [#'page] (.getElementById js/document "app")))
 
 (defn init! []
+  (load-interceptors!)
   (fetch-docs!)
   (hook-browser-navigation!)
   (mount-components))

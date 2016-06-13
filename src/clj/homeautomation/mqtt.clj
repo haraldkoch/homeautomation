@@ -1,9 +1,10 @@
 (ns homeautomation.mqtt
-  (:require [environ.core :refer [env]]
+  (:require [homeautomation.config :refer [env]]
             [clojurewerkz.machine-head.client :as mh]
             [clojurewerkz.machine-head.durability :refer [new-memory-persister new-file-persister]]
             [clojure.data.json :as json]
-            [taoensso.timbre :as timbre])
+            [clojure.tools.logging :as log]
+            [mount.core :refer [defstate]])
   (:import [java.util Date]
            [java.io PrintWriter]
            [org.eclipse.paho.client.mqttv3 MqttException]))
@@ -37,10 +38,10 @@
     (try
       (do
         (reset! conn (do-connect))
-        (timbre/info "MQTT connected to " (env :mqtt-url)))
+        (log/info "MQTT connected to " (env :mqtt-url)))
       (catch MqttException e
         (do
-          (timbre/error e "cannot connect to" (env :mqtt-url))
+          (log/error e "cannot connect to" (env :mqtt-url))
           (Thread/sleep 15000))))))
 
 (declare connection-lost)
@@ -50,8 +51,18 @@
 
 (defonce callbacks (atom {}))
 
-(defn add-callback [t f]
-  (swap! callbacks assoc t f))
+(declare handle-delivery)
+
+(defn add-callback [topic f]
+  (do
+    (log/info "setting subcriber for topic " topic)
+    (swap! callbacks assoc topic f)
+    (mh/subscribe @conn {topic 1} handle-delivery {:on-connection-lost connection-lost})))
+
+(defn del-callback [t]
+  (do
+    (swap! callbacks dissoc t)
+    (mh/unsubscribe @conn t)))
 
 (defn get-callback
   [t]
@@ -65,11 +76,11 @@
     [message (String. payload "UTF-8")]
     (try
       (do
-        (timbre/info "RCV topic: " topic "message: " message)
+        (log/info "RCV topic: " topic "message: " message)
         (-> message
             (to-map)
             ((get-callback topic))))
-      (catch Throwable t (timbre/error t "while processing message" message "on topic" topic)))))
+      (catch Throwable t (log/error t "while processing message" message "on topic" topic)))))
 
 ; this fn can be called from the MQTT library callback.
 ; We can't *send* a message while we're still
@@ -80,18 +91,19 @@
 (defn send-message [topic message]
   (future
     (let [payload (json/write-str message)]
-      (timbre/debug "sending: topic" topic "message" payload)
+      (log/debug "sending: topic" topic "message" payload)
       (mh/publish @conn topic payload 0)
-      (timbre/debug "message sent!"))))
+      (log/debug "message sent!"))))
 
+; FIXME - this should happen in a thread so that it doesn't block the caller when the MQTT server is down
 (defn start-subscribers
   []
   (do
     (connect)
     (doseq [entry @callbacks]
-      (timbre/info "starting subscriber for topic" (key entry))
+      (log/info "starting subscriber for topic" (key entry))
       (mh/subscribe @conn {(key entry) 1} handle-delivery {:on-connection-lost connection-lost}))
-    ))
+    conn))
 
 (defn stop-subscribers
   []
@@ -100,5 +112,9 @@
     (reset! conn nil)))
 
 (defn connection-lost [reason]
-  (timbre/info reason "connection lost - reconnecting...")
+  (log/info reason "connection lost - reconnecting...")
   (start-subscribers))
+
+(defstate conn
+          :start (start-subscribers)
+          :stop (stop-subscribers))
