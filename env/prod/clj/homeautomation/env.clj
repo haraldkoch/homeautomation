@@ -1,8 +1,11 @@
-(ns homeautomation.config
+(ns homeautomation.env
   (:require [clojure.tools.logging :as log]))
 
 (def defaults
   {:init
    (fn []
      (log/info "\n-=[homeautomation started successfully]=-"))
+   :stop
+   (fn []
+     (log/info "\n-=[homeautomation has shut down successfully]=-"))
    :middleware identity})

@@ -1,12 +1,13 @@
 (ns homeautomation.presence
-  (:require [environ.core :refer [env]]
+  (:require [homeautomation.config :refer [env]]
             [homeautomation.db.core :as db]
-            [taoensso.timbre :as timbre]
+            [clojure.tools.logging :as log]
             [clojure.string :refer [blank?]]
             [clj-time.core :as t]
             [clj-time.coerce :as c]
             [clj-time.format :as f]
-            [homeautomation.mqtt :as mqtt]))
+            [homeautomation.mqtt :as mqtt]
+            [mount.core :refer [defstate]]))
 
 (defn convert-timestamp [s] (->> s (f/parse (:date-time f/formatters)) (c/to-date)))
 
@@ -20,7 +21,7 @@
 (defn add-device
   [{:keys [:hostapd_mac :hostapd_clientname :status :read_time]}]
   (let [logmessage (str "new device " hostapd_clientname " at " (hour-minute read_time))]
-    (timbre/info logmessage)
+    (log/info logmessage)
     (db/create-device! {:macaddr            hostapd_mac
                         :name               hostapd_clientname
                         :status             (if (nil? status) "present" status)
@@ -31,9 +32,9 @@
                    :message logmessage})))
 
 (defn update-user-presence [username]
-  (timbre/debug "update-user-presence" username "called")
+  (log/debug "update-user-presence" username "called")
   (when username
-    (let [user (first (db/get-user-by-name {:username username}))
+    (let [user (db/get-user-by-name {:username username})
           presence (:presence user)
           devices (db/get-devices-for-user {:owner username})
           present (for [device devices :when (and (not (:ignore device)) (= (:status device) "present"))] true)
@@ -42,37 +43,36 @@
                          (pos? (count present)) "HOME"
                          :else "AWAY")]
       (when (not= presence new-presence)
-        (timbre/info "updating presence for" username "from" presence "to" new-presence)
+        (log/info "updating presence for" username "from" presence "to" new-presence)
         (db/set-user-presence! {:id (:id user) :presence new-presence})
         (notify-event {:event   "PRESENCE" :user user :presence new-presence
                        :message (str (:first_name user) " is now " new-presence)})))))
 
 (defn update-device-status
   [{:keys [:hostapd_mac :hostapd_clientname :status :read_time] :as message}]
-  (timbre/debug "update-device-status mac:" hostapd_mac "client" hostapd_clientname "status" status "read_time" read_time)
-  (let [devices (db/find-device {:macaddr hostapd_mac})
-        device (first devices)]
+  (log/debug "update-device-status mac:" hostapd_mac "client" hostapd_clientname "status" status "read_time" read_time)
+  (let [device (db/find-device {:macaddr hostapd_mac})]
 
     (if (zero? (count device))
       (add-device message)
       (do
         (when (and (not (blank? hostapd_clientname)) (not= hostapd_clientname (:name device)))
-          (timbre/info "update name for mac" hostapd_mac "from" (:name device) "to" hostapd_clientname)
+          (log/info "update name for mac" hostapd_mac "from" (:name device) "to" hostapd_clientname)
           (db/update-device-name! {:macaddr hostapd_mac
                                    :name    hostapd_clientname}))
 
         (when (and status (not= status (:status device)))
-          (timbre/info "update status for mac" hostapd_mac "from" (:status device) "to" status)
+          (log/info "update status for mac" hostapd_mac "from" (:status device) "to" status)
           (db/update-device-status! {:macaddr            hostapd_mac
                                      :status             status
                                      :last_status_change read_time})
 
           (when-not (:ignore device)
-            (update-user-presence (:username (first (db/get-user {:id (:owner device)}))))
+            (update-user-presence (:username (db/get-user {:id (:owner device)})))
             (notify-event {:event   "STATUS" :device device :status status
                            :message (str hostapd_clientname " is now " status " at " (hour-minute read_time))})))
 
-        (timbre/info "update seen for mac" hostapd_mac)
+        (log/info "update seen for mac" hostapd_mac)
         (db/update-device-seen! {:macaddr   hostapd_mac
                                  :last_seen read_time})))))
 
@@ -88,7 +88,7 @@
   (merge m {:read_time (convert-timestamp (:read_time m))}))
 
 (defn do-message [m]
-  (timbre/debug "do-message called for" m)
+  (log/debug "do-message called for" m)
   (-> m
       (set-read-time)
       (set-status)
@@ -96,3 +96,7 @@
 
 (defn init []
   (mqtt/add-callback "hostapd" do-message))
+
+(defstate presence
+          :start (mqtt/add-callback "hostapd" do-message)
+          :stop (mqtt/del-callback "hostapd" do-message))

@@ -1,98 +1,98 @@
--- name: create-user!
--- creates a new user record
+-- :name create-user! :! :n
+-- :doc creates a new user record
 INSERT INTO users
 (username, first_name, last_name)
 VALUES (:username, :first_name, :last_name);
 
--- name: update-user!
--- update an existing user record
+-- :name update-user! :! :n
+-- :doc update an existing user record
 UPDATE users
 SET username = :username, first_name = :first_name, last_name = :last_name
 WHERE id = :id;
 
--- name: get-user
--- retrieve a user given the id.
+-- :name get-user :? :1
+-- :doc retrieve a user given the id.
 SELECT * FROM users
 WHERE id = :id;
 
--- name: get-user-by-name
--- retrieve a user given username.
+-- :name get-user-by-name :? :1
+-- :doc retrieve a user given username.
 SELECT * FROM users
 WHERE username = :username;
 
--- name: get-users
--- retrieve all users
+-- :name get-users :? :*
+-- :doc retrieve all users
 SELECT * FROM users;
 
--- name: delete-user!
--- delete a user given the id
+-- :name delete-user! :! :n
+-- :doc delete a user given the id
 DELETE FROM users
 WHERE id = :id;
 
--- name: set-user-presence!
--- set the presence status of a user
+-- :name set-user-presence! :! :n
+-- :doc set the presence status of a user
 UPDATE users SET presence = :presence WHERE id = :id;
 
--- name: find-user-for-device
--- locates the user record for a given device
+-- :name find-user-for-device :? :1
+-- :doc locates the user record for a given device
 SELECT users.* FROM users
 JOIN devices ON (users.id = devices.owner)
 WHERE devices.name = :device;
 
--- name: get-device
+-- :name get-device :? :1
 SELECT * FROM devices WHERE id = :id;
 
--- name: get-devices
--- get all devices
+-- :name get-devices :? :*
+-- :doc get all devices
 SELECT d.id, d.macaddr, d.name, users.username as owner, d.ignore, d.status, d.last_status_change, d.last_seen
 FROM devices d
 LEFT JOIN users ON (d.owner = users.id);
 
--- name: find-device
--- find a device by MAC address
+-- :name find-device :? :1
+-- :doc find a device by MAC address
 SELECT * FROM devices
 WHERE macaddr = :macaddr;
 
--- name: get-devices-for-user
+-- :name get-devices-for-user :? :*
 SELECT * FROM devices
 WHERE owner = (select id from users where username = :owner);
 
--- name: create-device!
+-- :name create-device! :! :n
 INSERT INTO devices
 (macaddr, name, status, last_status_change, last_seen)
 VALUES (:macaddr, :name, :status, :last_status_change, :last_seen);
 
--- name: update-device-name!
+-- :name update-device-name! :! :n
 UPDATE devices
 SET name = :name
 WHERE macaddr = :macaddr;
 
--- name: update-device-seen!
+-- :name update-device-seen! :! :n
 UPDATE devices
 SET last_seen = :last_seen
 WHERE macaddr = :macaddr;
 
--- name: update-device-status!
+-- :name update-device-status! :! :n
 UPDATE devices
 SET status = :status, last_status_change = :last_status_change
 WHERE macaddr = :macaddr;
 
--- name: set-device-owner!
+-- :name set-device-owner! :! :n
 UPDATE devices
 SET owner = (select id from users where username = :owner)
 WHERE id = :device_id;
 
--- name: set-device-name!
+-- :name set-device-name! :! :n
 UPDATE devices
 SET name = :name
 WHERE id = :device_id;
 
--- name: set-device-ignore!
+-- :name set-device-ignore! :! :n
 UPDATE devices
 SET `ignore` = :ignore
 WHERE id = :device_id;
 
--- name: mark-devices-idle!
+-- :name mark-devices-idle! :! :n
 UPDATE devices
 SET status = 'idle'
 WHERE status = 'present' AND last_seen < TIMESTAMPADD(MINUTE,-30,NOW());
