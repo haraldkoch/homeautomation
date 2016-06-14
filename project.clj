@@ -13,7 +13,7 @@
                  [selmer "1.0.4"]
                  [markdown-clj "0.9.89"]
                  [ring-middleware-format "0.7.0"]
-                 [metosin/ring-http-response "0.6.5"]
+                 [metosin/ring-http-response "0.7.0"]
                  [bouncer "1.0.0"]
                  [org.webjars/bootstrap "4.0.0-alpha.2"]
                  [org.webjars/font-awesome "4.6.3"]
@@ -26,15 +26,15 @@
                  [cprop "0.1.8"]
                  [org.clojure/tools.cli "0.3.5"]
                  [luminus-nrepl "0.1.4"]
-                 [luminus-migrations "0.2.1"]
+                 [luminus-migrations "0.2.2"]
                  [conman "0.5.8"]
-                 [mysql/mysql-connector-java "5.1.6"]
+                 [mysql/mysql-connector-java "5.1.39"]
                  [org.webjars/webjars-locator-jboss-vfs "0.1.0"]
                  [luminus-immutant "0.2.0"]
 
                  ; local additions
                  [cheshire "5.6.1"]
-                 [com.andrewmcveigh/cljs-time "0.3.14"]
+                 [com.andrewmcveigh/cljs-time "0.4.0"]
                  [clojurewerkz/machine_head "1.0.0-beta9"]]
 
   :min-lein-version "2.0.0"
@@ -108,7 +108,7 @@
                                  [pjstadig/humane-test-output "0.8.0"]
                                  [doo "0.1.6"]
                                  [binaryage/devtools "0.7.0"]
-                                 [figwheel-sidecar "0.5.4-2"]
+                                 [figwheel-sidecar "0.5.4-3"]
                                  [com.cemerick/piggieback "0.2.2-SNAPSHOT"]]
                   :plugins      [[com.jakemccrary/lein-test-refresh "0.14.0"]
                                  [lein-doo "0.1.6"]
