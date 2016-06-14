@@ -49,8 +49,8 @@
     (do (db/set-device-ignore! (:params request))
         (let [ignored? (get-in request [:params :ignore])
               device-id (get-in request [:params :device_id])
-              device (first (db/get-device {:id device-id}))
-              user (first (db/get-user {:id (:owner device)}))
+              device (db/get-device {:id device-id})
+              user (db/get-user {:id (:owner device)})
               username (:username user)
               message (str "device " {:name device} " is now "  (if ignored? "ignored" "NOT ignored"))]
           (log/info message)

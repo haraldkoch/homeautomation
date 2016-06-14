@@ -34,7 +34,7 @@
 (defn update-user-presence [username]
   (log/debug "update-user-presence" username "called")
   (when username
-    (let [user (first (db/get-user-by-name {:username username}))
+    (let [user (db/get-user-by-name {:username username})
           presence (:presence user)
           devices (db/get-devices-for-user {:owner username})
           present (for [device devices :when (and (not (:ignore device)) (= (:status device) "present"))] true)
@@ -51,8 +51,7 @@
 (defn update-device-status
   [{:keys [:hostapd_mac :hostapd_clientname :status :read_time] :as message}]
   (log/debug "update-device-status mac:" hostapd_mac "client" hostapd_clientname "status" status "read_time" read_time)
-  (let [devices (db/find-device {:macaddr hostapd_mac})
-        device (first devices)]
+  (let [device (db/find-device {:macaddr hostapd_mac})]
 
     (if (zero? (count device))
       (add-device message)
@@ -69,7 +68,7 @@
                                      :last_status_change read_time})
 
           (when-not (:ignore device)
-            (update-user-presence (:username (first (db/get-user {:id (:owner device)}))))
+            (update-user-presence (:username (db/get-user {:id (:owner device)})))
             (notify-event {:event   "STATUS" :device device :status status
                            :message (str hostapd_clientname " is now " status " at " (hour-minute read_time))})))
 
