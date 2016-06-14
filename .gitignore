@@ -9,5 +9,6 @@ pom.xml
 profiles.clj
 /.env
 *.log
+/log
 resources/public/js
 .nrepl-port
