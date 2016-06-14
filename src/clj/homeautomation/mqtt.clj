@@ -2,16 +2,10 @@
   (:require [homeautomation.config :refer [env]]
             [clojurewerkz.machine-head.client :as mh]
             [clojurewerkz.machine-head.durability :refer [new-memory-persister new-file-persister]]
-            [clojure.data.json :as json]
+            [cheshire.core :refer :all]
             [clojure.tools.logging :as log]
             [mount.core :refer [defstate]])
-  (:import [java.util Date]
-           [java.io PrintWriter]
-           [org.eclipse.paho.client.mqttv3 MqttException]))
-
-(defn- write-date [x ^PrintWriter out]
-  (.print out (str x)))
-(extend Date json/JSONWriter {:-write write-date})
+  (:import [org.eclipse.paho.client.mqttv3 MqttException]))
 
 (defonce conn (atom nil))
 
@@ -47,7 +41,7 @@
 (declare connection-lost)
 
 (defn to-map [s]
-  (json/read-str s :key-fn keyword))
+  (parse-string s true))
 
 (defonce callbacks (atom {}))
 
@@ -90,7 +84,7 @@
 
 (defn send-message [topic message]
   (future
-    (let [payload (json/write-str message)]
+    (let [payload (generate-string message)]
       (log/debug "sending: topic" topic "message" payload)
       (mh/publish @conn topic payload 0)
       (log/debug "message sent!"))))

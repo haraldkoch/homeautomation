@@ -33,6 +33,7 @@
                  [luminus-immutant "0.2.0"]
 
                  ; local additions
+                 [cheshire "5.6.1"]
                  [com.andrewmcveigh/cljs-time "0.3.14"]
                  [clojurewerkz/machine_head "1.0.0-beta9"]]
 
