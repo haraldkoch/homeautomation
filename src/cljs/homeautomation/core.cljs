@@ -1,21 +1,24 @@
 (ns homeautomation.core
   (:require [reagent.core :as r]
             [reagent.session :as session]
+            [re-frame.core :refer [dispatch dispatch-sync subscribe]]
             [secretary.core :as secretary :include-macros true]
             [goog.events :as events]
             [goog.history.EventType :as HistoryEventType]
             [markdown.core :refer [md->html]]
             [homeautomation.ajax :refer [load-interceptors!]]
             [ajax.core :refer [GET POST]]
-            [homeautomation.presence :refer [presence-page fetch-users users]]
-            [homeautomation.misc :refer [render-table]])
+            [homeautomation.presence :refer [presence-page]]
+            [homeautomation.misc :refer [render-table]]
+            [homeautomation.handlers]                       ;; load these namespaces so that registers trigger
+            [homeautomation.subs])
   (:import goog.History))
 
 (defn nav-link [uri title page collapsed?]
   [:li.nav-item
    {:class (when (= page (session/get :page)) "active")}
    [:a.nav-link
-    {:href uri
+    {:href     uri
      :on-click #(reset! collapsed? true)} title]])
 
 (defn navbar []
@@ -29,7 +32,7 @@
         [:a.navbar-brand {:href "#/"} "homeautomation"]
         [:ul.nav.navbar-nav
          [nav-link "#/" "Home" :home collapsed?]
-	 [nav-link "#/presence" "Presence" :presence collapsed?]
+         [nav-link "#/presence" "Presence" :presence collapsed?]
          [nav-link "#/about" "About" :about collapsed?]]]])))
 
 (defn about-page []
@@ -39,16 +42,16 @@
      "Harald's home automation clojure playground. Beware of dragon."]]])
 
 (defn show-users []
-  (fetch-users)
-  (fn []
-    [:div.row
-     [:div.col-sm-12
-      [:table.table.table-striped
-       (into [:tbody]
-             (for [user @users]
-               [:tr
-                [:td (:first_name user) [:span.small " (" (:username user) ")"]]
-                [:td (:presence user)]]))]]]))
+  (let [users (subscribe [:users])]
+    (fn []
+      [:div.row
+       [:div.col-sm-12
+        [:table.table.table-striped
+         (into [:tbody]
+               (for [user @users]
+                 [:tr
+                  [:td (:first_name user) [:span.small " (" (:username user) ")"]]
+                  [:td (:presence user)]]))]]])))
 
 (defn home-page []
   [:div.container
@@ -104,4 +107,5 @@
   (load-interceptors!)
   (fetch-docs!)
   (hook-browser-navigation!)
+  (dispatch-sync [:initialize])
   (mount-components))

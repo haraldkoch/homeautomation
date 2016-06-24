@@ -35,7 +35,8 @@
                  ; local additions
                  [cheshire "5.6.1"]
                  [com.andrewmcveigh/cljs-time "0.4.0"]
-                 [clojurewerkz/machine_head "1.0.0-beta9"]]
+                 [clojurewerkz/machine_head "1.0.0-beta9"]
+                 [re-frame "0.7.0"]]
 
   :min-lein-version "2.0.0"
 
@@ -112,7 +113,7 @@
                                  [com.cemerick/piggieback "0.2.2-SNAPSHOT"]]
                   :plugins      [[com.jakemccrary/lein-test-refresh "0.14.0"]
                                  [lein-doo "0.1.6"]
-                                 [lein-figwheel "0.5.4-2"]
+                                 [lein-figwheel "0.5.4-3"]
                                  [org.clojure/clojurescript "1.9.36"]]
                   
                   :doo {:build "test"}
