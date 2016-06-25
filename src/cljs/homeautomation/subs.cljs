@@ -16,8 +16,8 @@
   (compare (presences (:presence usera)) (presences (:presence userb))))
 
 (defn users-by-presence [usera userb]
-  (let  [presence (compare-presence usera userb)
-         name (compare (:username usera) (:username userb))]
+  (let [presence (compare-presence usera userb)
+        name (compare (:username usera) (:username userb))]
     (cond (not= 0 presence) presence
           :else name)))
 
@@ -45,13 +45,14 @@
   (fn [db _]
     (let [devices (reaction (:devices @db))
           named (reaction (filter #(:name %) @devices))]
-               (reaction (sort device-sort @named)))))
+      (reaction (sort device-sort @named)))))
 
 (register-sub
   :unnamed-devices
-  (fn [db _] (let [devices (reaction (:devices @db))
-                   unnamed (reaction (filter #(nil? (:name %)) @devices))]
-               (reaction (sort-by :macaddr @unnamed)))))
+  (fn [db _]
+    (let [devices (reaction (:devices @db))
+          unnamed (reaction (filter #(nil? (:name %)) @devices))]
+      (reaction (sort-by :macaddr @unnamed)))))
 
 (register-sub :status
               (fn [db _] (reaction (:status @db))))
