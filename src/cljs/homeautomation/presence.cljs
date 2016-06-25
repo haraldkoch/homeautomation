@@ -2,46 +2,37 @@
   (:require [homeautomation.ajax :refer [fetch send]]
             [homeautomation.misc :refer [render-table render-cell fmt-date-recent fmt-date]]
             [reagent.core :refer [atom]]
+            [re-frame.core :refer [dispatch dispatch-sync subscribe]]
             [ajax.core :refer [GET POST]]))
 
-(def error (atom nil))
-(def status (atom nil))
-(def users (atom nil))
-(def devices (atom nil))
+(defn clear-indicators [] (dispatch [:set-error nil]) (dispatch [:set-status nil]))
 
-(defn clear-indicators [] (reset! error nil) (reset! status nil))
-
-(defn fetch-table [url query result error]
-  (fetch url query
-         #(do
-           (reset! result %))
-         #(reset! error (get-in % [:resonse :error]))))
-
-(defn fetch-users [] (fetch-table "/users" [] users error))
-(defn fetch-devices [] (fetch-table "/devices" [] devices error))
-
-(defn add-user! [query result]
-  (send "/add-user" @query
+;; FIXME - should these be event handlers instead of local functions?
+(defn add-user! [query]
+  (send "/add-user" query
         #(do
-          (clear-indicators)
-          (reset! result %)
-          (fetch-users))
-        #(reset! error (get-in % [:response :error]))))
+          (dispatch [:set-status %])
+          (dispatch [:fetch-users]))
+        #(dispatch [:set-error (get-in % [:response :error])])))
 
 (defn set-owner! [device-id owner]
   (send "/set-device-owner" {:device_id device-id :owner owner}
-        #(fetch-devices)
-        #(reset! error (get-in % [:response :error]))))
+        #(do
+          (dispatch [:fetch-devices])
+          (dispatch [:fetch-users]))                        ;; changing an owner can update user presence
+        #(dispatch [:set-error (get-in % [:response :error])])))
 
 (defn set-device-name! [device-id name]
   (send "/set-device-name" {:device_id device-id :name name}
-        #(fetch-devices)
-        #(reset! error (get-in % [:response :error]))))
+        #(dispatch [:fetch-devices])
+        #(dispatch [:set-error (get-in % [:response :error])])))
 
 (defn set-ignore! [device-id ignore]
   (send "/set-device-ignore" {:device_id device-id :ignore ignore}
-        #(fetch-devices)
-        #(reset! error (get-in % [:response :error]))))
+        #(do
+          (dispatch [:fetch-devices])
+          (dispatch [:fetch-users]))                        ;; toggling ignore can update user presence
+        #(dispatch [:set-error (get-in % [:response :error])])))
 
 (defn input-field [param data-atom]
   [:input.form-control
@@ -60,20 +51,23 @@
          [input-field :last_name form-data]
          [:button.btn.btn-primary
           {:on-click #(do (reset! show-user-form nil)
-                          (add-user! form-data status))}
+                          (add-user! form-data))}
           "add user"]]]])))
 
 (defn show-users []
   (let [show-user-form (atom nil)
-        form-data (atom {:username nil :first_name nil :last_name nil})]
-    (fetch-users)
+        form-data (atom {:username nil :first_name nil :last_name nil})
+        users (subscribe [:users])
+        users-loaded? (subscribe [:users-loaded?])]
     (fn []
       [:div
        [add-user-form show-user-form form-data]
        [:div.row
         [:div.col-sm-10
          [:h2 "Users"]
-         [render-table (->> @users (map #(dissoc % :id)))]]
+         (if-not @users-loaded?
+           [:div "Loading Users..."]
+           [render-table (->> @users (map #(dissoc % :id)))])]
         [:div.col-sm-2
          [:button.btn.btn-primary
           {:on-click #(do (clear-indicators)
@@ -82,35 +76,28 @@
                             (reset! show-user-form true)))}
           (if @show-user-form "hide" "new user")]]]])))
 
-(defn usernames []
-  (conj (map #(:username %) @users) ""))
-
 (defn username-selection-list [device-id user]
-  [:div.form-group
-   (into [:select.form-control {:default-value user
-                                :on-change     #(set-owner! device-id (.-value (.-target %)))}]
-         (for [name (usernames)]
-           [:option {:value name} name]))])
+  (let [users (subscribe [:users])
+        usernames (subscribe [:usernames])]
+    (fn [device-id user]
+      [:div.form-group
+       (into [:select.form-control
+              {:default-value user
+               :on-change     #(set-owner! device-id (.-value (.-target %)))}]
+             (for [name (conj @usernames "")]
+               [:option {:value name} name]))])))
 
 (defn ignore-checkbox [device-id ignore]
   [:div.form-group
    [:input.form-control
-    {:type      :checkbox :checked ignore :defaultChecked ignore
+    {:type      :checkbox :checked ignore
      :on-change #(set-ignore! device-id (.-checked (.-target %)))}]])
-
-(defn device-sort [devicea deviceb]
-  (let [ignore (compare (:ignore devicea) (:ignore deviceb))
-        seen (compare (:last_seen deviceb) (:last_seen devicea))
-        name (compare (:name devicea) (:name deviceb))]
-    (cond (not= 0 ignore) ignore
-          (not= 0 seen) seen
-          :else name)))
 
 (defn devices-table [items]
   [:table.table.table-striped.table-condensed
    [:thead [:tr [:th "Device"] [:th "Owner"] [:th "Ignore"] [:th "Status"] [:th "Seen"]]]
    (into [:tbody]
-         (for [device (sort device-sort items)]
+         (for [device items]
            [:tr
             [:td [:div (:name device)] [:div.small (:macaddr device)]]
             [:td [username-selection-list (:id device) (:owner device)]]
@@ -123,14 +110,15 @@
               (fmt-date-recent (:last_seen device))]]]))])
 
 (defn show-devices []
-  (let []
-    (fetch-table "/devices" [] devices error)
+  (let [devices (subscribe [:named-devices])
+        devices-loaded? (subscribe [:devices-loaded?])]
     (fn []
-      [:div.row
-       [:div.col-sm-12
-        [:h2 "Devices"]
-        (let [items (filter #(:name %) @devices)]
-          [devices-table items])]])))
+      (if-not @devices-loaded?
+        [:div "Loading Devices..."]
+        [:div.row
+         [:div.col-sm-12
+          [:h2 "Devices"]
+          [devices-table @devices]]]))))
 
 (defn device-name-field [id name]
   [:input.form-control
@@ -159,25 +147,30 @@
               (fmt-date-recent (:last_seen device))]]]))])
 
 (defn macaddrs []
-  (fn []
-    [:div.row
-     [:div.col-sm-12
-      [:h2 "New MAC Addresses"]
-      (let [items (filter #(nil? (:name %)) @devices)]
-        [macaddr-table items])]]))
+  (let [devices (subscribe [:unnamed-devices])
+        devices-loaded? (subscribe [:devices-loaded?])]
+    (fn []
+      (if @devices-loaded?
+        [:div.row
+         [:div.col-sm-12
+          [:h2 "New MAC Addresses"]
+          [macaddr-table @devices]]]))))
 
 (defn status-bar []
-  (fn []
-    (if @status
-      [:div.row
-       [:div.col-sm-12
-        [:div.alert.alert-success "Status:" @status]]])))
+  (let [status (subscribe [:status])]
+    (fn []
+      (if @status
+        [:div.row
+         [:div.col-sm-12
+          [:div.alert.alert-success "Status:" @status]]]))))
 
 (defn error-bar []
-  (if @error
-    [:div.row
-     [:div.col-sm-12
-      [:div.alert.alert-danger "Error:" @error]]]))
+  (let [error (subscribe [:error])]
+    (fn []
+      (if @error
+        [:div.row
+         [:div.col-sm-12
+          [:div.alert.alert-danger "Error:" @error]]]))))
 
 (defn presence-page []
   [:div.container
