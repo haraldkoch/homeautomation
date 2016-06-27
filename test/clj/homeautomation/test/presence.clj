@@ -128,7 +128,18 @@
                                       :owner              "snake"}
                                      (dissoc (db/find-device {:macaddr "01:02:03:04:05:06"}) :id)))
                               (presence/update-user-presence "snake")
-                              (is (= "AWAY" (user-presence "snake"))))))
+                              (is (= "AWAY" (user-presence "snake")))
+
+                              ;; device name updates in message should not update database
+                              (presence/do-message (assoc (leave-message date) :hostapd_clientname "A-NEW-NAME"))
+                              (is (= {:macaddr            "01:02:03:04:05:06"
+                                      :name               "TEST-DEVICE"
+                                      :status             "absent"
+                                      :ignore             false
+                                      :last_status_change date
+                                      :last_seen          date
+                                      :owner              "snake"}
+                                     (dissoc (db/find-device {:macaddr "01:02:03:04:05:06"}) :id))))))
 
 (deftest clean-database
   (jdbc/with-db-transaction [t-conn *db*]

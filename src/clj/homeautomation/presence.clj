@@ -56,7 +56,7 @@
     (if (zero? (count device))
       (add-device message)
       (do
-        (when (and (not (blank? hostapd_clientname)) (not= hostapd_clientname (:name device)))
+        (when (and (not (blank? hostapd_clientname)) (blank? (:name device)))
           (log/info "update name for mac" hostapd_mac "from" (:name device) "to" hostapd_clientname)
           (db/update-device-name! {:macaddr hostapd_mac
                                    :name    hostapd_clientname}))
