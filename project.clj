@@ -4,13 +4,13 @@
   :url "https://github.com/haraldkoch/homeautomation"
 
   :dependencies [[luminus-log4j "0.1.3"]
-                 [cljs-ajax "0.5.5"]
+                 [cljs-ajax "0.5.8"]
                  [secretary "1.2.3"]
-                 [reagent-utils "0.1.8"]
+                 [reagent-utils "0.1.9"]
                  [reagent "0.6.0-rc"]
-                 [org.clojure/clojurescript "1.9.36" :scope "provided"]
+                 [org.clojure/clojurescript "1.9.92" :scope "provided"]
                  [org.clojure/clojure "1.8.0"]
-                 [selmer "1.0.4"]
+                 [selmer "1.0.7"]
                  [markdown-clj "0.9.89"]
                  [ring-middleware-format "0.7.0"]
                  [metosin/ring-http-response "0.7.0"]
@@ -19,7 +19,7 @@
                  [org.webjars/font-awesome "4.6.3"]
                  [org.webjars.bower/tether "1.3.2"]
                  [org.clojure/tools.logging "0.3.1"]
-                 [compojure "1.5.0"]
+                 [compojure "1.5.1"]
                  [ring-webjars "0.1.1"]
                  [ring/ring-defaults "0.2.1"]
                  [mount "0.1.10"]
@@ -33,7 +33,7 @@
                  [luminus-immutant "0.2.0"]
 
                  ; local additions
-                 [cheshire "5.6.1"]
+                 [cheshire "5.6.2"]
                  [com.andrewmcveigh/cljs-time "0.4.0"]
                  [clojurewerkz/machine_head "1.0.0-beta9"]
                  [re-frame "0.7.0"]]
@@ -48,7 +48,7 @@
   :migratus {:store :database :db ~(get (System/getenv) "DATABASE_URL")}
 
   :plugins [[lein-cprop "1.0.1"]
-            [migratus-lein "0.3.6"]
+            [migratus-lein "0.3.7"]
             [lein-cljsbuild "1.1.3"]
             [lein-immutant "2.1.0"]]
   :clean-targets ^{:protect false}
@@ -88,7 +88,8 @@
   :figwheel
   {:http-server-root "public"
    :nrepl-port 7002
-   :css-dirs ["resources/public/css"]}
+   :css-dirs ["resources/public/css"]
+   :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
   
 
   :profiles
@@ -108,20 +109,18 @@
                                  [ring/ring-devel "1.5.0"]
                                  [pjstadig/humane-test-output "0.8.0"]
                                  [doo "0.1.6"]
-                                 [binaryage/devtools "0.7.0"]
-                                 [figwheel-sidecar "0.5.4-3"]
+                                 [binaryage/devtools "0.7.2"]
+                                 [figwheel-sidecar "0.5.4-5"]
                                  [com.cemerick/piggieback "0.2.2-SNAPSHOT"]]
                   :plugins      [[com.jakemccrary/lein-test-refresh "0.14.0"]
                                  [lein-doo "0.1.6"]
-                                 [lein-figwheel "0.5.4-3"]
-                                 [org.clojure/clojurescript "1.9.36"]]
+                                 [lein-figwheel "0.5.4-5"]
+                                 [org.clojure/clojurescript "1.9.92"]]
                   
                   :doo {:build "test"}
                   :source-paths ["env/dev/clj" "test/clj"]
                   :resource-paths ["env/dev/resources"]
-                  :repl-options {:init-ns user
-                                 :nrepl-middleware
-                                 [cemerick.piggieback/wrap-cljs-repl]}
+                  :repl-options {:init-ns user}
                   :injections [(require 'pjstadig.humane-test-output)
                                (pjstadig.humane-test-output/activate!)]}
    :project/test {:resource-paths ["env/dev/resources" "env/test/resources"]}
