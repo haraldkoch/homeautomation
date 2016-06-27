@@ -40,7 +40,10 @@ JOIN devices ON (users.id = devices.owner)
 WHERE devices.name = :device;
 
 -- :name get-device :? :1
-SELECT * FROM devices WHERE id = :id;
+SELECT d.id, d.macaddr, d.name, users.username as owner, d.ignore, d.status, d.last_status_change, d.last_seen
+FROM devices d
+  LEFT JOIN users ON (d.owner = users.id)
+ WHERE d.id = :id;
 
 -- :name get-devices :? :*
 -- :doc get all devices
@@ -50,12 +53,16 @@ LEFT JOIN users ON (d.owner = users.id);
 
 -- :name find-device :? :1
 -- :doc find a device by MAC address
-SELECT * FROM devices
-WHERE macaddr = :macaddr;
+SELECT d.id, d.macaddr, d.name, users.username as owner, d.ignore, d.status, d.last_status_change, d.last_seen
+  FROM devices d
+    LEFT JOIN users ON (d.owner = users.id)
+WHERE d.macaddr = :macaddr;
 
 -- :name get-devices-for-user :? :*
-SELECT * FROM devices
-WHERE owner = (select id from users where username = :owner);
+SELECT d.id, d.macaddr, d.name, users.username as owner, d.ignore, d.status, d.last_status_change, d.last_seen
+FROM devices d
+  LEFT JOIN users ON (d.owner = users.id)
+WHERE users.username = :owner;
 
 -- :name create-device! :! :n
 INSERT INTO devices

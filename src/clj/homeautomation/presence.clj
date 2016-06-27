@@ -33,7 +33,7 @@
 
 (defn update-user-presence [username]
   (log/debug "update-user-presence" username "called")
-  (when username
+  (when-not (blank? username)
     (let [user (db/get-user-by-name {:username username})
           presence (:presence user)
           devices (db/get-devices-for-user {:owner username})
@@ -68,7 +68,7 @@
                                      :last_status_change read_time})
 
           (when-not (:ignore device)
-            (update-user-presence (:username (db/get-user {:id (:owner device)})))
+            (update-user-presence (:owner device))
             (notify-event {:event   "STATUS" :device device :status status
                            :message (str hostapd_clientname " is now " status " at " (hour-minute read_time))})))
 
@@ -99,4 +99,4 @@
 
 (defstate presence
           :start (mqtt/add-callback "hostapd" do-message)
-          :stop (mqtt/del-callback "hostapd" do-message))
+          :stop (mqtt/del-callback "hostapd"))

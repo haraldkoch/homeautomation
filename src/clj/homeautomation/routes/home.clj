@@ -35,11 +35,13 @@
 
 (defn set-device-owner [request]
   (try
-    (do (db/set-device-owner! (:params request))
-        (presence/update-user-presence (get-in request [:params :owner]))
-        (let [message (str "device now owned by " (get-in request [:params :owner]))]
-          (log/info message)
-          message))
+    (let [current-owner (:owner (db/get-device {:id (get-in request [:params :device_id])}))
+          message (str "device now owned by " (get-in request [:params :owner]))]
+      (db/set-device-owner! (:params request))
+      (presence/update-user-presence (get-in request [:params :owner])) ;; new owner
+      (presence/update-user-presence current-owner)
+      (log/info message)
+      message)
     (catch Exception e#
       (log/error e# "error handling request")
       (response/internal-server-error {:error (.getMessage e#)}))))
@@ -50,11 +52,9 @@
         (let [ignored? (get-in request [:params :ignore])
               device-id (get-in request [:params :device_id])
               device (db/get-device {:id device-id})
-              user (db/get-user {:id (:owner device)})
-              username (:username user)
               message (str "device " {:name device} " is now " (if ignored? "ignored" "NOT ignored"))]
           (log/info message)
-          (presence/update-user-presence username)
+          (presence/update-user-presence (:owner device))
           message))
     (catch Exception e#
       (log/error e# "error handling request")
