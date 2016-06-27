@@ -127,7 +127,7 @@
     :on-key-down #(case (.-which %)
                    13 (set-device-name! id (.-value (.-target %)))
                    "default")
-    :on-blur     #(set-device-name! id (.-value (.-target %)))
+    #_[ :on-blur     #(set-device-name! id (.-value (.-target %))) ]
     }])
 
 (defn macaddr-table [items]

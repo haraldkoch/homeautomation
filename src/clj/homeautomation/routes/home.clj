@@ -52,7 +52,7 @@
               device (db/get-device {:id device-id})
               user (db/get-user {:id (:owner device)})
               username (:username user)
-              message (str "device " {:name device} " is now "  (if ignored? "ignored" "NOT ignored"))]
+              message (str "device " {:name device} " is now " (if ignored? "ignored" "NOT ignored"))]
           (log/info message)
           (presence/update-user-presence username)
           message))
@@ -60,12 +60,17 @@
       (log/error e# "error handling request")
       (response/internal-server-error {:error (.getMessage e#)}))))
 
+;; FIXME: use a validator instead - see Dmitri's selme-guestbook
 (defn set-device-name [request]
   (try
-    (do (db/set-device-name! (:params request))
-        (let [message (str "device name changed to " (get-in request [:params :name]))]
-          (log/info message)
-          message))
+    (let [new-name (get-in request [:params :name])
+          message (str "device name changed to '" new-name "'")]
+      (if-not (clojure.string/blank? new-name)
+        (do (db/set-device-name! (:params request))
+            (log/info message)
+            message)
+        (do (log/error "set-device-name: new name cannot be empty")
+            (response/internal-server-error {:error "set-device-name: new name cannot be empty"}))))
     (catch Exception e#
       (log/error e# "error handling request")
       (response/internal-server-error {:error (.getMessage e#)}))))
