@@ -67,7 +67,7 @@
          [:h2 "Users"]
          (if-not @users-loaded?
            [:div "Loading Users..."]
-           [render-table (->> @users (map #(dissoc % :id)))])]
+           [render-table @users])]
         [:div.col-sm-2
          [:button.btn.btn-primary
           {:on-click #(do (clear-indicators)
@@ -98,6 +98,7 @@
    [:thead [:tr [:th "Device"] [:th "Owner"] [:th "Ignore"] [:th "Status"] [:th "Seen"]]]
    (into [:tbody]
          (for [device items]
+           ^{:key (:id device)}
            [:tr
             [:td [:div (:name device)] [:div.small (:macaddr device)]]
             [:td [username-selection-list (:id device) (:owner device)]]
@@ -135,6 +136,7 @@
    [:thead [:tr [:th "Device"] [:th "Name"] [:th "Ignore"] [:th "Status"] [:th "Seen"]]]
    (into [:tbody]
          (for [device items]
+           ^{:key (:id device)}
            [:tr
             [:td (:macaddr device)]
             [:td [device-name-field (:id device) (:name device)]]

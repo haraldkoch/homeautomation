@@ -47,7 +47,8 @@
       :else (str v))))
 
 (defn render-table [items]
-  (let [columns (keys (first items))]
+  (let [items-no-id (->> items (map #(dissoc % :id))) 
+        columns (keys (first items-no-id))]
     [:div.table-responsive
      [:table.table.table-striped.table-condensed
       [:thead
@@ -55,7 +56,7 @@
         (for [column columns] ^{:key (name column)} [:th (name column)])]]
       (into [:tbody]
             (for [row items]
-              (into [:tr]
+              (into ^{:key (:id row)} [:tr]
                     (for [column columns]
                       [:td
                        (render-cell (get row column))]))))]]))
