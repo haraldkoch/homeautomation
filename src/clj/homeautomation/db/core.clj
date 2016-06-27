@@ -36,4 +36,4 @@
 
 (declare create-user! update-user! get-user get-user-by-name delete-user! get-users set-user-presence!
          get-devices get-device find-user-for-device find-device get-devices-for-user
-         create-device! update-device-name! update-device-seen! update-device-status! set-device-owner! set-device-name! set-device-ignore!)
+         create-device! delete-device! update-device-name! update-device-seen! update-device-status! set-device-owner! set-device-name! set-device-ignore!)

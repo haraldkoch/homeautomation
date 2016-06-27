@@ -28,7 +28,7 @@
                         :last_status_change read_time
                         :last_seen          read_time})
     (notify-event {:event   "NEW"
-                   :device  (first (db/find-device hostapd_mac))
+                   :device  (first (db/find-device {:macaddr hostapd_mac}))
                    :message logmessage})))
 
 (defn update-user-presence [username]

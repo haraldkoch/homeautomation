@@ -67,6 +67,9 @@
                                         :owner              nil}
                                        (dissoc (db/find-device {:macaddr "00:00:00:00:00:00"}) :id)))))))
 
+(deftest db-clean
+  (jdbc/with-db-transaction [t-conn *db*]
+                            (db/delete-device! {:id (:id (db/find-device {:macaddr "00:00:00:00:00:00"}))})))
 #_(deftest test-users
     (jdbc/with-db-transaction [t-conn *db*]
                               (jdbc/db-set-rollback-only! t-conn)

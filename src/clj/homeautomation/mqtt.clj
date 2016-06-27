@@ -51,12 +51,14 @@
   (do
     (log/info "setting subcriber for topic " topic)
     (swap! callbacks assoc topic f)
-    (mh/subscribe @conn {topic 1} handle-delivery {:on-connection-lost connection-lost})))
+    (when @conn
+      (mh/subscribe @conn {topic 1} handle-delivery {:on-connection-lost connection-lost}))))
 
 (defn del-callback [t]
   (do
     (swap! callbacks dissoc t)
-    (mh/unsubscribe @conn t)))
+    (when @conn
+      (mh/unsubscribe @conn t))))
 
 (defn get-callback
   [t]

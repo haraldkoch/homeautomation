@@ -69,6 +69,9 @@ INSERT INTO devices
 (macaddr, name, status, last_status_change, last_seen)
 VALUES (:macaddr, :name, :status, :last_status_change, :last_seen);
 
+-- :name delete-device! :! :n
+DELETE FROM devices where id = :id;
+
 -- :name update-device-name! :! :n
 UPDATE devices
 SET name = :name
