@@ -21,12 +21,7 @@ This application then receives those status updates, tracks device
 presence, and turns device presence into user presence events, also
 distributed via MQTT. Back in the network, there is a process that
 receives events over MQTT and publishes them to my phone using
-[Instapush][instapush].
-
-TODO:
-
--  [ ] use retained messages to publish a current presence for each known user
--  [ ] do not replace user-entered name with empty name from logstash parser
+[Instapush][instapush] and/or [Pushbullet][pushbullet].
 
 ## Prerequisites
 
@@ -55,3 +50,4 @@ Distributed under the [MIT License](http://opensource.org/licenses/MIT).
 [openwrt]: <https://openwrt.org/>
 [logstash]: <https://www.elastic.co/products/logstash>
 [instapush]: <https://instapush.im/>
+[pushbullet]: <https://www.pushbullet.com>
