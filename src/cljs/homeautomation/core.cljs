@@ -11,7 +11,8 @@
             [homeautomation.presence :refer [presence-page]]
             [homeautomation.misc :refer [render-table]]
             [homeautomation.handlers]                       ;; load these namespaces so that registers trigger
-            [homeautomation.subs])
+            [homeautomation.subs]
+            [homeautomation.ws :as ws])
   (:import goog.History))
 
 (defn nav-link [uri title page collapsed?]
@@ -101,7 +102,8 @@
 
 (defn mount-components []
   (r/render [#'navbar] (.getElementById js/document "navbar"))
-  (r/render [#'page] (.getElementById js/document "app")))
+  (r/render [#'page] (.getElementById js/document "app"))
+  (ws/start-router!))                                       ; call this here so figwheel reloads trigger it
 
 (defn init! []
   (load-interceptors!)

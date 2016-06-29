@@ -72,3 +72,11 @@
   (fn [db [_ error]]
     (-> db (assoc :error error))))
 
+(defn replace-by-id [entry sequence]
+  (map #(if (= (:id %) (:id entry)) entry %) sequence))
+
+(register-handler
+  :presence/device-updated
+  (fn [db [_ device]]
+    (println "got device updated event for" device)
+    (assoc db :devices (replace-by-id device (:devices db)))))

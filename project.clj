@@ -36,7 +36,8 @@
                  [cheshire "5.6.2"]
                  [com.andrewmcveigh/cljs-time "0.4.0"]
                  [clojurewerkz/machine_head "1.0.0-beta9"]
-                 [re-frame "0.7.0"]]
+                 [re-frame "0.7.0"]
+                 [com.taoensso/sente "1.9.0-RC1"]]
 
   :min-lein-version "2.0.0"
 

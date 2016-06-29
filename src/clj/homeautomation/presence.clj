@@ -1,13 +1,15 @@
 (ns homeautomation.presence
   (:require [homeautomation.config :refer [env]]
             [homeautomation.db.core :as db]
+            [homeautomation.routes.ws :as ws]
             [clojure.tools.logging :as log]
             [clojure.string :refer [blank?]]
             [clj-time.core :as t]
             [clj-time.coerce :as c]
             [clj-time.format :as f]
             [homeautomation.mqtt :as mqtt]
-            [mount.core :refer [defstate]]))
+            [mount.core :refer [defstate]])
+  (:import (java.util Date Calendar)))
 
 (defn convert-timestamp [s] (->> s (f/parse (:date-time f/formatters)) (c/to-date)))
 
@@ -74,7 +76,8 @@
 
         (log/info "update seen for mac" hostapd_mac)
         (db/update-device-seen! {:macaddr   hostapd_mac
-                                 :last_seen read_time})))))
+                                 :last_seen read_time})))
+    (ws/push-device (db/find-device {:macaddr hostapd_mac}))))
 
 (defn set-status [m]
   (let [action (:hostapd_action m)
@@ -100,3 +103,31 @@
 (defstate presence
           :start (mqtt/add-callback "hostapd" do-message)
           :stop (mqtt/del-callback "hostapd"))
+
+(defn to-default-timezone [d] (t/to-time-zone d (t/default-time-zone)))
+(defn fmt-time [t]
+  (->> t (c/from-date) (to-default-timezone) (f/unparse (f/formatters :date-time))))
+
+(defn join-message [date]
+  {:read_time          (fmt-time date)
+   :hostapd_clientname "IPHONE-CHK"
+   :hostapd_mac        "40:b3:95:71:eb:83"
+   :hostapd_action     "authenticated"})
+
+(defn leave-message [date]
+  {:read_time          (fmt-time date)
+   :hostapd_clientname "IPHONE-CHK"
+   :hostapd_mac        "40:b3:95:71:eb:83"
+   :hostapd_action     "deauthenticated"})
+
+(defn present []
+  (let [now (Calendar/getInstance)
+        _ (.set now Calendar/MILLISECOND 0)
+        date (Date. (.getTimeInMillis now))]
+    (do-message (join-message date))))
+
+(defn absent []
+  (let [now (Calendar/getInstance)
+        _ (.set now Calendar/MILLISECOND 0)
+        date (Date. (.getTimeInMillis now))]
+    (do-message (leave-message date))))
