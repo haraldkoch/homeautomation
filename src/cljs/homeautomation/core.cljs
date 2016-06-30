@@ -9,7 +9,6 @@
             [homeautomation.ajax :refer [load-interceptors!]]
             [ajax.core :refer [GET POST]]
             [homeautomation.presence :refer [presence-page]]
-            [homeautomation.misc :refer [render-table]]
             [homeautomation.handlers]                       ;; load these namespaces so that registers trigger
             [homeautomation.subs]
             [homeautomation.ws :as ws])

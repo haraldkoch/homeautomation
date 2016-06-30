@@ -54,18 +54,29 @@
           (chsk-send! uid [:guestbook/add-message response]))))))
 ;END:save-message
 
-(defn push-device
-  "push an updated or new device to all clients"
+(defn update-device
+  "push an updated device to all clients"
   [device]
   (doseq [uid (:any @connected-uids)]
     (chsk-send! uid [:presence/device-updated device])))
+
+(defn add-device
+  "push an updated device to all clients"
+  [device]
+  (doseq [uid (:any @connected-uids)]
+    (chsk-send! uid [:presence/device-added device])))
+
+(defn update-user
+  "push an updated user to all clients"
+  [user]
+  (doseq [uid (:any @connected-uids)]
+    (chsk-send! uid [:presence/user-updated user])))
 
 ;START:router
 (defn stop-router! [stop-fn]
   (when stop-fn (stop-fn)))
 
 (defn start-router! []
-  (println "\n\n+++++++ STARTING ROUTER! +++++++\n\n")
   (sente/start-chsk-router! ch-chsk handle-message!))
 
 (defstate router
