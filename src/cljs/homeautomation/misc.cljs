@@ -19,7 +19,7 @@
 
 (defn fmt-date-recent [d]
   (let [datetime (-> d (c/from-date) (t/to-default-time-zone))
-        i (t/interval datetime (t/now))]
+        i (t/interval datetime (max datetime (t/now)))]
     (cond (< (t/in-days i) 1) (f/unparse time-only datetime)
           (< (t/in-days i) 7) (f/unparse day-with-time datetime)
           (< (t/in-years i) 1) (f/unparse month-day-time datetime)
