@@ -1,6 +1,7 @@
 (ns homeautomation.presence
   (:require [homeautomation.config :refer [env]]
             [homeautomation.db.core :as db]
+            [homeautomation.routes.ws :as ws]
             [clojure.tools.logging :as log]
             [clojure.string :refer [blank?]]
             [clj-time.core :as t]
@@ -46,7 +47,8 @@
         (log/info "updating presence for" username "from" presence "to" new-presence)
         (db/set-user-presence! {:id (:id user) :presence new-presence})
         (notify-event {:event   "PRESENCE" :user user :presence new-presence
-                       :message (str (:first_name user) " is now " new-presence)})))))
+                       :message (str (:first_name user) " is now " new-presence)})
+        (ws/update-user (db/get-user-by-name {:username username}))))))
 
 (defn update-device-status
   [{:keys [:hostapd_mac :hostapd_clientname :status :read_time] :as message}]
@@ -54,7 +56,9 @@
   (let [device (db/find-device {:macaddr hostapd_mac})]
 
     (if (zero? (count device))
-      (add-device message)
+      (do
+        (add-device message)
+        (ws/add-device (db/find-device {:macaddr hostapd_mac})))
       (do
         (when (and (not (blank? hostapd_clientname)) (blank? (:name device)))
           (log/info "update name for mac" hostapd_mac "from" (:name device) "to" hostapd_clientname)
@@ -74,7 +78,8 @@
 
         (log/info "update seen for mac" hostapd_mac)
         (db/update-device-seen! {:macaddr   hostapd_mac
-                                 :last_seen read_time})))))
+                                 :last_seen read_time})
+        (ws/update-device (db/find-device {:macaddr hostapd_mac}))))))
 
 (defn set-status [m]
   (let [action (:hostapd_action m)

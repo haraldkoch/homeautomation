@@ -2,6 +2,7 @@
   (:require [compojure.core :refer [routes wrap-routes]]
             [homeautomation.layout :refer [error-page]]
             [homeautomation.routes.home :refer [home-routes]]
+            [homeautomation.routes.ws :refer [websocket-routes]]
             [compojure.route :as route]
             [homeautomation.env :refer [defaults]]
             [mount.core :as mount]
@@ -13,6 +14,7 @@
 
 (def app-routes
   (routes
+    #'websocket-routes
     (-> #'home-routes
         (wrap-routes middleware/wrap-csrf)
         (wrap-routes middleware/wrap-formats))

@@ -19,7 +19,7 @@
 
 (defn fmt-date-recent [d]
   (let [datetime (-> d (c/from-date) (t/to-default-time-zone))
-        i (t/interval datetime (t/now))]
+        i (t/interval datetime (max datetime (t/now)))]
     (cond (< (t/in-days i) 1) (f/unparse time-only datetime)
           (< (t/in-days i) 7) (f/unparse day-with-time datetime)
           (< (t/in-years i) 1) (f/unparse month-day-time datetime)
@@ -46,24 +46,23 @@
       nil [:span.jh-empty nil]
       :else (str v))))
 
-(defn render-table [items]
-  (let [items-no-id (->> items (map #(dissoc % :id))) 
-        columns (keys (first items-no-id))]
-    [:div.table-responsive
-     [:table.table.table-striped.table-condensed
-      [:thead
-       [:tr
-        (for [column columns] ^{:key (name column)} [:th (name column)])]]
-      (into [:tbody]
-            (for [row items]
-              (into ^{:key (:id row)} [:tr]
-                    (for [column columns]
-                      [:td
-                       (render-cell (get row column))]))))]]))
+(defn render-table
+  ([items]
+   (let [items-no-id (->> items (map #(dissoc % :id)))
+         columns (keys (first items-no-id))]
+     (render-table items columns)))
 
-(defn spinner []
-  [:div.spinner
-   [:div.bounce1]
-   [:div.bounce2]
-   [:div.bounce3]])
+  ([items columns]
+   [:div.table-responsive
+    [:table.table.table-striped.table-condensed
+     [:thead
+      [:tr
+       (for [column columns] ^{:key (name column)} [:th (name column)])]]
+     (into [:tbody]
+           (for [row items]
+             (into ^{:key (:id row)} [:tr]
+                   (for [column columns]
+                     [:td
+                      (render-cell (get row column))]))))]]))
+
 

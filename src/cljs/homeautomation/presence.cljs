@@ -1,6 +1,6 @@
 (ns homeautomation.presence
   (:require [homeautomation.ajax :refer [fetch send]]
-            [homeautomation.misc :refer [render-table render-cell fmt-date-recent fmt-date]]
+            [homeautomation.misc :refer [render-table fmt-date-recent fmt-date]]
             [reagent.core :refer [atom]]
             [re-frame.core :refer [dispatch dispatch-sync subscribe]]
             [ajax.core :refer [GET POST]]))
@@ -67,7 +67,7 @@
          [:h2 "Users"]
          (if-not @users-loaded?
            [:div "Loading Users..."]
-           [render-table @users])]
+           [render-table @users [:username :presence :first_name :last_name]])]
         [:div.col-sm-2
          [:button.btn.btn-primary
           {:on-click #(do (clear-indicators)
@@ -123,7 +123,7 @@
 
 (defn device-name-field [id name]
   [:input.form-control
-   {:type        :text :value name
+   {:type        :text :value (or name "")                  ; null pointer checks in Clojure? really?
     :placeholder "device name"
     :on-key-down #(case (.-which %)
                    13 (set-device-name! id (.-value (.-target %)))
