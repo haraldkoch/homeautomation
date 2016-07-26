@@ -23,12 +23,11 @@
   :initialize
   (fn
     [db _]
-    (-> db
-        (assoc :users-loaded? false)
-        (assoc :devices-loaded? false))
     (reload-users)
     (reload-devices)
-    db))                                                    ;; pure handlers must return a db
+    (-> db
+        (assoc :users-loaded? false)
+        (assoc :devices-loaded? false))))
 
 (register-handler
   :fetch-users
