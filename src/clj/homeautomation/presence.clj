@@ -25,16 +25,16 @@
     (log/info logmessage)
     (db/create-device! {:macaddr            hostapd_mac
                         :name               hostapd_clientname
-                        :status             (if (nil? status) "present" status)
+                        :status             (or status "present")
                         :last_status_change read_time
                         :last_seen          read_time})
     (notify-event {:event   "NEW"
-                   :device  (first (db/find-device {:macaddr hostapd_mac}))
+                   :device  (db/find-device {:macaddr hostapd_mac})
                    :message logmessage})))
 
 (defn update-user-presence [username]
   (log/debug "update-user-presence" username "called")
-  (when-not (blank? username)
+  (when-not (blank? username)                               ;; blank usernames are 'true'
     (let [user (db/get-user-by-name {:username username})
           presence (:presence user)
           devices (db/get-devices-for-user {:owner username})
@@ -55,7 +55,7 @@
   (log/debug "update-device-status mac:" hostapd_mac "client" hostapd_clientname "status" status "read_time" read_time)
   (let [device (db/find-device {:macaddr hostapd_mac})]
 
-    (if (zero? (count device))
+    (if-not device
       (do
         (add-device message)
         (ws/add-device (db/find-device {:macaddr hostapd_mac})))
@@ -87,10 +87,10 @@
                  ("authenticated" "associated") "present"
                  ("deauthenticated" "disassociated") "absent"
                  "present")]                                ; we may want to change this to 'unknown' later
-    (merge m {:status status})))
+    (assoc m :status status)))
 
 (defn set-read-time [m]
-  (merge m {:read_time (convert-timestamp (:read_time m))}))
+  (update m :read_time convert-timestamp))
 
 (defn do-message [m]
   (log/debug "do-message called for" m)
