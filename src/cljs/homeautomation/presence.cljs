@@ -1,6 +1,6 @@
 (ns homeautomation.presence
-  (:require [homeautomation.ajax :refer [fetch send]]
-            [homeautomation.misc :refer [render-table fmt-date-recent fmt-date]]
+  (:require [homeautomation.ajax :refer [fetch send ]]
+            [homeautomation.misc :refer [render-table fmt-date-recent fmt-time]]
             [reagent.core :refer [atom]]
             [re-frame.core :refer [dispatch dispatch-sync subscribe]]
             [ajax.core :refer [GET POST]]))
@@ -95,7 +95,7 @@
 
 (defn devices-table [items]
   [:table.table.table-striped.table-condensed
-   [:thead [:tr [:th "Device"] [:th "Owner"] [:th "Ignore"] [:th "Status"] [:th "Seen"]]]
+   [:thead [:tr [:th "Device"] [:th "Owner"] [:th "Ignore"] [:th "Status"] [:th [:div "Last Change"] [:div "Last Seen"]]]]
    (into [:tbody]
          (for [device items]
            ^{:key (:id device)}
@@ -105,9 +105,9 @@
             [:td [ignore-checkbox (:id device) (:ignore device)]]
             [:td (:status device)]
             [:td
-             [:div {:title (fmt-date (:last_status_change device))}
+             [:div {:title (fmt-time (:last_status_change device))}
               (fmt-date-recent (:last_status_change device))]
-             [:div {:title (fmt-date (:last_seen device))}
+             [:div {:title (fmt-time (:last_seen device))}
               (fmt-date-recent (:last_seen device))]]]))])
 
 (defn show-devices []
@@ -133,7 +133,7 @@
 
 (defn macaddr-table [items]
   [:table.table.table-striped.table-condensed
-   [:thead [:tr [:th "Device"] [:th "Name"] [:th "Ignore"] [:th "Status"] [:th "Seen"]]]
+   [:thead [:tr [:th "Device"] [:th "Name"] [:th "Ignore"] [:th "Status"] [:th [:div "Last Change"] [:div "Last Seen"]]]]
    (into [:tbody]
          (for [device items]
            ^{:key (:id device)}
@@ -143,9 +143,9 @@
             [:td (:ignore device)]
             [:td (:status device)]
             [:td
-             [:div {:title (fmt-date (:last-status_change device))}
+             [:div {:title (fmt-time (:last-status_change device))}
               (fmt-date-recent (:last_status_change device))]
-             [:div {:title (fmt-date (:last-seen device))}
+             [:div {:title (fmt-time (:last-seen device))}
               (fmt-date-recent (:last_seen device))]]]))])
 
 (defn macaddrs []
