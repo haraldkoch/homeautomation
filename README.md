@@ -37,7 +37,7 @@ To start a web server for the application, run:
 
 ## License
 
-Copyright © 2015 C. Harald Koch.
+Copyright © 2015-2016 C. Harald Koch.
 
 Distributed under the [MIT License](http://opensource.org/licenses/MIT).
 
