@@ -8,6 +8,7 @@
             [clj-time.coerce :as c]
             [clj-time.format :as f]
             [homeautomation.mqtt :as mqtt]
+            [homeautomation.telegram :as telegram]
             [mount.core :refer [defstate]]))
 
 (defn convert-timestamp [s] (->> s (f/parse (:date-time f/formatters)) (c/to-date)))

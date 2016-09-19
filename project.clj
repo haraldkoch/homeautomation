@@ -37,7 +37,8 @@
                  [com.andrewmcveigh/cljs-time "0.4.0"]
                  [clojurewerkz/machine_head "1.0.0-beta9"]
                  [re-frame "0.7.0"]
-                 [com.taoensso/sente "1.9.0-RC1"]]
+                 [com.taoensso/sente "1.9.0-RC1"]
+                 [morse "0.2.0"]]
 
   :min-lein-version "2.0.0"
 
