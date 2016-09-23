@@ -1,9 +1,10 @@
 (ns homeautomation.presence
-  (:require [homeautomation.ajax :refer [fetch send ]]
-            [homeautomation.misc :refer [render-table fmt-date-recent fmt-time]]
+  (:require [homeautomation.ajax :refer [fetch send]]
+            [homeautomation.misc :refer [render-table fmt-date-recent fmt-time edit-field]]
+            [ajax.core :refer [GET POST]]
+            [clojure.string :refer [blank?]]
             [reagent.core :refer [atom]]
-            [re-frame.core :refer [dispatch dispatch-sync subscribe]]
-            [ajax.core :refer [GET POST]]))
+            [re-frame.core :refer [dispatch dispatch-sync subscribe]]))
 
 (defn clear-indicators [] (dispatch [:set-error nil]) (dispatch [:set-status nil]))
 
@@ -76,9 +77,24 @@
                             (reset! show-user-form true)))}
           (if @show-user-form "hide" "new user")]]]])))
 
-(defn username-selection-list [device-id user]
-  (let [users (subscribe [:users])
-        usernames (subscribe [:usernames])]
+(defn device-name-field [_ _]
+  (let [editing (atom false)]
+    (fn [id name]
+      [:div.editable {:class (str (if @editing "editing"))}
+       [:div.view
+        (if (blank? name)
+          [:button {:on-click #(reset! editing true)} "Add Name"]
+          [:label {:on-double-click #(reset! editing true)} name])
+        ]
+       (when @editing
+         ; FIXME - allow deleting the name also
+         [edit-field {:class   "edit"
+                                   :initial name
+                                   :on-save #(set-device-name! id %)
+                                   :on-stop #(reset! editing false)}])])))
+
+(defn username-selection-list [_ _]
+  (let [usernames (subscribe [:usernames])]
     (fn [device-id user]
       [:div.form-group
        (into [:select.form-control
@@ -100,7 +116,9 @@
          (for [device items]
            ^{:key (:id device)}
            [:tr
-            [:td [:div (:name device)] [:div.small (:macaddr device)]]
+            [:td
+             [device-name-field (:id device) (:name device)]
+             [:div.small (:macaddr device)]]
             [:td [username-selection-list (:id device) (:owner device)]]
             [:td [ignore-checkbox (:id device) (:ignore device)]]
             [:td (:status device)]
@@ -120,16 +138,6 @@
          [:div.col-sm-12
           [:h2 "Devices"]
           [devices-table @devices]]]))))
-
-(defn device-name-field [id name]
-  [:input.form-control
-   {:type        :text :value (or name "")                  ; null pointer checks in Clojure? really?
-    :placeholder "device name"
-    :on-key-down #(case (.-which %)
-                   13 (set-device-name! id (.-value (.-target %)))
-                   "default")
-    #_[ :on-blur     #(set-device-name! id (.-value (.-target %))) ]
-    }])
 
 (defn macaddr-table [items]
   [:table.table.table-striped.table-condensed
