@@ -2,7 +2,7 @@
   (:require [cljs-time.core :as t]
             [cljs-time.coerce :as c]
             [cljs-time.format :as f]
-            ))
+            [reagent.core :as r]))
 
 (def my-formatter (f/formatter "yyyy-MM-dd HH:mm:ss"))
 (defn fmt-time [t]
@@ -65,4 +65,22 @@
                      [:td
                       (render-cell (get row column))]))))]]))
 
+(defn input-field [{:keys [initial on-save on-stop]}]
+  (let [val (r/atom initial)
+        stop #(do (reset! val "")
+                  (if on-stop (on-stop)))
+        save #(let [v (-> @val str clojure.string/trim)]
+               (if-not (empty? v) (on-save v))
+               (stop))]
+    (fn [props]
+      [:input (merge props
+                     {:type        "text" :value @val :on-blur save
+                      :on-change   #(reset! val (-> % .-target .-value))
+                      :on-key-down #(case (.-which %)
+                                     13 (save)
+                                     27 (stop)
+                                     nil)})])))
+
+(def edit-field (with-meta input-field
+                           {:component-did-mount #(.focus (r/dom-node %))}))
 
