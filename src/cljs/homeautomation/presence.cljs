@@ -41,8 +41,8 @@
     :placeholder (name param)
     :on-change   #(swap! data-atom assoc param (.-value (.-target %)))}])
 
-(defn add-user-form [show-user-form form-data]
-  (fn []
+(defn add-user-form [_ _]
+  (fn [show-user-form form-data]
     (if @show-user-form
       [:div.row
        [:div.col-sm-12
@@ -52,7 +52,7 @@
          [input-field :last_name form-data]
          [:button.btn.btn-primary
           {:on-click #(do (reset! show-user-form nil)
-                          (add-user! form-data))}
+                          (add-user! @form-data))}
           "add user"]]]])))
 
 (defn show-users []
