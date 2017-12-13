@@ -62,11 +62,14 @@
   (db/get-devices))
 
 (defroutes home-routes
-  (GET "/" [] (home-page))
+  (GET "/" []
+       (home-page))
   (GET "/users" [] (get-users))
   (GET "/devices" [] (get-devices))
   (POST "/add-user" request (add-user request))
   (POST "/set-device-owner" request (set-device-owner request))
   (POST "/set-device-name" request (set-device-name request))
   (POST "/set-device-ignore" request (set-device-ignore request))
-  (GET "/docs" [] (response/ok (-> "docs/docs.md" io/resource slurp))))
+  (GET "/docs" []
+       (-> (response/ok (-> "docs/docs.md" io/resource slurp))
+                                   (response/header "Content-Type" "text/plain; charset=utf-8"))))

@@ -6,7 +6,6 @@
             [homeautomation.config :refer [env]]
             [clojure.tools.cli :refer [parse-opts]]
             [clojure.tools.logging :as log]
-            [luminus.logger :as logger]
             [mount.core :as mount])
   (:gen-class))
 
@@ -20,6 +19,7 @@
                 (http/start
                   (-> env
                       (assoc :handler (handler/app))
+                      (update :io-threads #(or % (* 2 (.availableProcessors (Runtime/getRuntime)))))
                       (update :port #(or (-> env :options :port) %))))
                 :stop
                 (http/stop http-server))
@@ -32,9 +32,6 @@
                 :stop
                 (when repl-server
                   (repl/stop repl-server)))
-
-(mount/defstate log
-                :start (logger/init (:log-config env)))
 
 
 (defn stop-app []
@@ -52,11 +49,16 @@
 
 (defn -main [& args]
   (cond
+    (some #{"init"} args)
+    (do
+      (mount/start #'homeautomation.config/env)
+      (migrations/init (select-keys env [:database-url :init-script]))
+      (System/exit 0))
     (some #{"migrate" "rollback"} args)
     (do
       (mount/start #'homeautomation.config/env)
       (migrations/migrate args (select-keys env [:database-url]))
       (System/exit 0))
     :else
-    (start-app args)))
-  
+    (start-app args))
+  )

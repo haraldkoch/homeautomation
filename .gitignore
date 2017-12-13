@@ -8,7 +8,7 @@ pom.xml
 /.lein-*
 profiles.clj
 /.env
-*.log
-/log
-resources/public/js
 .nrepl-port
+/log
+*.log
+resources/public/js

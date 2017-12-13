@@ -5,6 +5,7 @@ body {
 }
 .navbar {
   margin-bottom: 10px;
+  border-radius: 0px;
 }
 .navbar-brand {
   float: none;

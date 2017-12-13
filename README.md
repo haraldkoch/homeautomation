@@ -5,7 +5,7 @@
 
 # homeautomation
 
-Powered by [Luminus](http://www.luminusweb.net/).
+Powered by [Luminus](http://www.luminusweb.net/) version "2.9.12.06".
 
 This is a place for me to play with home automation technologies using
 Clojure. There are many exciting technologies floating around right now;

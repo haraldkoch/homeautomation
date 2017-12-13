@@ -1,13 +1,13 @@
 (ns homeautomation.core
   (:require [reagent.core :as r]
-            [reagent.session :as session]
-            [re-frame.core :refer [dispatch dispatch-sync subscribe]]
-            [secretary.core :as secretary :include-macros true]
+            [re-frame.core :as rf]
+            [secretary.core :as secretary]
             [goog.events :as events]
             [goog.history.EventType :as HistoryEventType]
             [markdown.core :refer [md->html]]
-            [homeautomation.ajax :refer [load-interceptors!]]
             [ajax.core :refer [GET POST]]
+            [homeautomation.ajax :refer [load-interceptors!]] 
+            [homeautomation.events]
             [homeautomation.presence :refer [presence-page]]
             [homeautomation.handlers]                       ;; load these namespaces so that registers trigger
             [homeautomation.subs]
@@ -15,34 +15,35 @@
   (:import goog.History))
 
 (defn nav-link [uri title page collapsed?]
-  [:li.nav-item
-   {:class (when (= page (session/get :page)) "active")}
-   [:a.nav-link
-    {:href     uri
-     :on-click #(reset! collapsed? true)} title]])
+  (let [selected-page (rf/subscribe [:page])]
+    [:li.nav-item
+     {:class (when (= page @selected-page) "active")}
+     [:a.nav-link
+      {:href uri
+       :on-click #(reset! collapsed? true)} title]]))
 
 (defn navbar []
-  (let [collapsed? (r/atom true)]
-    (fn []
-      [:nav.navbar.navbar-light.bg-faded
-       [:button.navbar-toggler.hidden-sm-up
-        {:on-click #(swap! collapsed? not)} "☰"]
-       [:div.collapse.navbar-toggleable-xs
-        (when-not @collapsed? {:class "in"})
-        [:a.navbar-brand {:href "#/"} "homeautomation"]
-        [:ul.nav.navbar-nav
-         [nav-link "#/" "Home" :home collapsed?]
-         [nav-link "#/presence" "Presence" :presence collapsed?]
-         [nav-link "#/about" "About" :about collapsed?]]]])))
+  (r/with-let [collapsed? (r/atom true)]
+    [:nav.navbar.navbar-dark.bg-primary
+     [:button.navbar-toggler.hidden-sm-up
+      {:on-click #(swap! collapsed? not)} "☰"]
+     [:div.collapse.navbar-toggleable-xs
+      (when-not @collapsed? {:class "in"})
+      [:a.navbar-brand {:href "#/"} "homeautomation"]
+      [:ul.nav.navbar-nav
+       [nav-link "#/" "Home" :home collapsed?]
+       [nav-link "#/presence" "Presence" :presence collapsed?]
+       [nav-link "#/about" "About" :about collapsed?]]]]))
 
 (defn about-page []
   [:div.container
    [:div.row
     [:div.col-md-12
-     "Harald's home automation clojure playground. Beware of dragon."]]])
+     [:img {:src (str js/context "/img/warning_clojure.png")}]
+     [:p "Harald's home automation clojure playground. Beware of dragon."]]]])
 
 (defn show-users []
-  (let [users (subscribe [:users])]
+  (let [users (rf/subscribe [:users])]
     (fn []
       [:div.row
        [:div.col-sm-12
@@ -62,26 +63,30 @@
    [:footer
     [:p.small "Powered by " [:a {:href "http://www.luminusweb.net/"} "Luminus"]]]])
 
-(def pages
-  {:home     #'home-page
-   :presence #'presence-page
-   :about    #'about-page})
+(defmulti pages (fn [page] page))
+(defmethod pages :home [_] [home-page])
+(defmethod pages :about [_] [about-page])
+(defmethod pages :presence [_] [presence-page])
+
 
 (defn page []
-  [(pages (session/get :page))])
+  (r/with-let [active-page (rf/subscribe [:page])]
+    [:div
+     [navbar]
+     (pages @active-page)]))
 
 ;; -------------------------
 ;; Routes
 (secretary/set-config! :prefix "#")
 
 (secretary/defroute "/" []
-  (session/put! :page :home))
-
-(secretary/defroute "/presence" []
-  (session/put! :page :presence))
+  (rf/dispatch [:set-active-page :home]))
 
 (secretary/defroute "/about" []
-  (session/put! :page :about))
+  (rf/dispatch [:set-active-page :about]))
+
+(secretary/defroute "/presence" []
+  (rf/dispatch [:set-active-page :presence]))
 
 ;; -------------------------
 ;; History
@@ -97,16 +102,18 @@
 ;; -------------------------
 ;; Initialize app
 (defn fetch-docs! []
-  (GET (str js/context "/docs") {:handler #(session/put! :docs %)}))
+  (GET "/docs" {:handler #(rf/dispatch [:set-docs %])}))
 
 (defn mount-components []
-  (r/render [#'navbar] (.getElementById js/document "navbar"))
+  (rf/clear-subscription-cache!)
   (r/render [#'page] (.getElementById js/document "app"))
-  (ws/start-router!))                                       ; call this here so figwheel reloads trigger it
+    (ws/start-router!))                                       ; call this here so figwheel reloads trigger it
+
 
 (defn init! []
+  (rf/dispatch-sync [:initialize-db])
+  (rf/dispatch [:initialize])
   (load-interceptors!)
   (fetch-docs!)
   (hook-browser-navigation!)
-  (dispatch-sync [:initialize])
   (mount-components))

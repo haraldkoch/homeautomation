@@ -3,89 +3,62 @@
   :description "Harald plays with home automation"
   :url "https://github.com/haraldkoch/homeautomation"
 
-  :dependencies [[luminus-log4j "0.1.3"]
-                 [cljs-ajax "0.5.8"]
-                 [secretary "1.2.3"]
-                 [reagent-utils "0.1.9"]
-                 [reagent "0.6.0-rc"]
-                 [org.clojure/clojurescript "1.9.92" :scope "provided"]
-                 [org.clojure/clojure "1.8.0"]
-                 [selmer "1.0.7"]
-                 [markdown-clj "0.9.89"]
-                 [ring-middleware-format "0.7.0"]
-                 [metosin/ring-http-response "0.7.0"]
-                 [bouncer "1.0.0"]
-                 [org.webjars/bootstrap "4.0.0-alpha.2"]
-                 [org.webjars/font-awesome "4.6.3"]
-                 [org.webjars.bower/tether "1.3.2"]
-                 [org.clojure/tools.logging "0.3.1"]
-                 [compojure "1.5.1"]
-                 [ring-webjars "0.1.1"]
-                 [ring/ring-defaults "0.2.1"]
-                 [mount "0.1.10"]
-                 [cprop "0.1.8"]
-                 [org.clojure/tools.cli "0.3.5"]
+  :dependencies [[buddy "2.0.0"]
+                 [clj-time "0.14.2"]
+                 [cljs-ajax "0.7.3"]
+                 [compojure "1.6.0"]
+                 [conman "0.7.4"]
+                 [cprop "0.1.11"]
+                 [funcool/struct "1.1.0"]
+                 [luminus-immutant "0.2.4"]
+                 [luminus-migrations "0.4.3"]
                  [luminus-nrepl "0.1.4"]
-                 [luminus-migrations "0.2.2"]
-                 [conman "0.5.8"]
+                 [luminus/ring-ttl-session "0.3.2"]
+                 [markdown-clj "1.0.1"]
+                 [metosin/muuntaja "0.4.1"]
+                 [metosin/ring-http-response "0.9.0"]
+                 [mount "0.1.11"]
                  [mysql/mysql-connector-java "5.1.39"]
-                 [org.webjars/webjars-locator-jboss-vfs "0.1.0"]
-                 [luminus-immutant "0.2.0"]
+                 [org.clojure/clojure "1.9.0"]
+                 [org.clojure/clojurescript "1.9.946" :scope "provided"]
+                 [org.clojure/tools.cli "0.3.5"]
+                 [org.clojure/tools.logging "0.4.0"]
+                 [org.clojure/tools.reader "1.1.1"]
+                 [org.webjars/bootstrap "4.0.0-alpha.5"]
+                 [org.webjars.bower/tether "1.4.0"]
+                 [org.webjars/font-awesome "4.7.0"]
+                 [re-frame "0.10.2"]
+                 [reagent "0.7.0"]
+                 [reagent-utils "0.2.1"]
+                 [ring-webjars "0.2.0"]
+                 [ring/ring-core "1.6.3"]
+                 [ring/ring-defaults "0.3.1"]
+                 [secretary "1.2.3"]
+                 [selmer "1.11.3"]
 
                  ; local additions
-                 [cheshire "5.6.2"]
-                 [com.andrewmcveigh/cljs-time "0.4.0"]
-                 [clojurewerkz/machine_head "1.0.0-beta9"]
-                 [re-frame "0.7.0"]
-                 [com.taoensso/sente "1.9.0-RC1"]]
+                 [cheshire "5.8.0"]
+                 [clojurewerkz/machine_head "1.0.0"]
+                 [com.andrewmcveigh/cljs-time "0.5.2"]
+                 [com.taoensso/sente "1.12.0"]
+                 [day8.re-frame/http-fx "0.1.4"]]
 
   :min-lein-version "2.0.0"
 
   :jvm-opts ["-server" "-Dconf=.lein-env"]
   :source-paths ["src/clj" "src/cljc"]
+  :test-paths ["test/clj"]
   :resource-paths ["resources" "target/cljsbuild"]
   :target-path "target/%s/"
-  :main homeautomation.core
+  :main ^:skip-aot homeautomation.core
   :migratus {:store :database :db ~(get (System/getenv) "DATABASE_URL")}
 
-  :plugins [[lein-cprop "1.0.1"]
-            [migratus-lein "0.3.7"]
-            [lein-cljsbuild "1.1.3"]
+  :plugins [[lein-cprop "1.0.3"]
+            [migratus-lein "0.5.3"]
+            [lein-cljsbuild "1.1.5"]
             [lein-immutant "2.1.0"]]
   :clean-targets ^{:protect false}
   [:target-path [:cljsbuild :builds :app :compiler :output-dir] [:cljsbuild :builds :app :compiler :output-to]]
-
-  :cljsbuild
-  {:builds
-   {:app
-    {:source-paths ["src/cljc" "src/cljs" "env/dev/cljs"]
-     :figwheel true
-     :compiler
-     {:main "homeautomation.app"
-      :asset-path "/js/out"
-      :output-to "target/cljsbuild/public/js/app.js"
-      :output-dir "target/cljsbuild/public/js/out"
-      :optimizations :none
-      :source-map true
-      :pretty-print true}}
-    :test
-    {:source-paths ["src/cljc" "src/cljs" "test/cljs"]
-     :compiler
-     {:output-to "target/test.js"
-      :main "homeautomation.doo-runner"
-      :optimizations :whitespace
-      :pretty-print true}}
-    :min
-    {:source-paths ["src/cljc" "src/cljs" "env/prod/cljs"]
-     :compiler
-     {:output-to "target/cljsbuild/public/js/app.js"
-      :output-dir "target/uberjar"
-      :externs ["react/externs/react.js"]
-      :optimizations :advanced
-      :pretty-print false
-      :closure-warnings
-      {:externs-validation :off :non-standard-jsdoc :off}}}}}
-  
   :figwheel
   {:http-server-root "public"
    :nrepl-port 7002
@@ -95,35 +68,75 @@
 
   :profiles
   {:uberjar {:omit-source true
-             
              :prep-tasks ["compile" ["cljsbuild" "once" "min"]]
+             :cljsbuild
+             {:builds
+              {:min
+               {:source-paths ["src/cljc" "src/cljs" "env/prod/cljs"]
+                :compiler
+                {:output-to "target/cljsbuild/public/js/app.js"
+                 :optimizations :advanced
+                 :pretty-print false
+                 :closure-warnings
+                 {:externs-validation :off :non-standard-jsdoc :off}
+                 :externs ["react/externs/react.js"]}}}}
+             
+             
              :aot :all
              :uberjar-name "homeautomation.jar"
              :source-paths ["env/prod/clj"]
              :resource-paths ["env/prod/resources"]}
 
    :dev           [:project/dev :profiles/dev]
-   :test          [:project/test :profiles/test]
+   :test          [:project/dev :project/test :profiles/test]
 
-   :project/dev  {:dependencies [[prone "1.1.1"]
-                                 [ring/ring-mock "0.3.0"]
-                                 [ring/ring-devel "1.5.0"]
-                                 [pjstadig/humane-test-output "0.8.0"]
-                                 [doo "0.1.6"]
-                                 [binaryage/devtools "0.7.2"]
-                                 [figwheel-sidecar "0.5.4-5"]
-                                 [com.cemerick/piggieback "0.2.2-SNAPSHOT"]]
-                  :plugins      [[com.jakemccrary/lein-test-refresh "0.14.0"]
-                                 [lein-doo "0.1.6"]
-                                 [lein-figwheel "0.5.4-5"]
-                                 [org.clojure/clojurescript "1.9.92"]]
+   :project/dev  {:dependencies [[prone "1.1.4"]
+                                 [ring/ring-mock "0.3.2"]
+                                 [ring/ring-devel "1.6.3"]
+                                 [pjstadig/humane-test-output "0.8.3"]
+                                 [binaryage/devtools "0.9.8"]
+                                 [com.cemerick/piggieback "0.2.2"]
+                                 [doo "0.1.8"]
+                                 [figwheel-sidecar "0.5.14"]
+                                 [re-frisk "0.5.3"]]
+                  :plugins      [[com.jakemccrary/lein-test-refresh "0.19.0"]
+                                 [lein-doo "0.1.8"]
+                                 [lein-figwheel "0.5.14"]
+                                 [org.clojure/clojurescript "1.9.946"]]
+                  :cljsbuild
+                  {:builds
+                   {:app
+                    {:source-paths ["src/cljs" "src/cljc" "env/dev/cljs"]
+                     :figwheel {:on-jsload "homeautomation.core/mount-components"}
+                     :compiler
+                     {:main "homeautomation.app"
+                      :asset-path "/js/out"
+                      :output-to "target/cljsbuild/public/js/app.js"
+                      :output-dir "target/cljsbuild/public/js/out"
+                      :source-map true
+                      :optimizations :none
+                      :pretty-print true
+                      :preloads [re-frisk.preload]}}}}
+                  
+                  
                   
                   :doo {:build "test"}
-                  :source-paths ["env/dev/clj" "test/clj"]
+                  :source-paths ["env/dev/clj"]
                   :resource-paths ["env/dev/resources"]
                   :repl-options {:init-ns user}
                   :injections [(require 'pjstadig.humane-test-output)
                                (pjstadig.humane-test-output/activate!)]}
-   :project/test {:resource-paths ["env/dev/resources" "env/test/resources"]}
+   :project/test {:resource-paths ["env/test/resources"]
+                  :cljsbuild
+                  {:builds
+                   {:test
+                    {:source-paths ["src/cljc" "src/cljs" "test/cljs"]
+                     :compiler
+                     {:output-to "target/test.js"
+                      :main "homeautomation.doo-runner"
+                      :optimizations :whitespace
+                      :pretty-print true}}}}
+                  
+                  }
    :profiles/dev {}
    :profiles/test {}})

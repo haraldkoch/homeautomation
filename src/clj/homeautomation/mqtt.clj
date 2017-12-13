@@ -15,15 +15,18 @@
 (defn get-persister []
   (if (env :dev) (new-memory-persister) (new-file-persister)))
 
+(declare connection-lost)
+
 (defn do-connect []
   (mh/connect (env :mqtt-url)
-              (get-client-id)
-              (get-persister)
-              {:username            (env :mqtt-user)
-               :password            (env :mqtt-pass)
-               :keep-alive-interval 60
-               ; the machine-head client checks this field for nil. NIL IS FALSE, SILLY PEOPLE!
-               :clean-session       (boolean (env :dev))}))
+              {:client-id          (get-client-id)
+               :persister          (get-persister)
+               :on-connection-lost connection-lost
+               :opts               {:username            (env :mqtt-user)
+                                    :password            (env :mqtt-pass)
+                                    :keep-alive-interval 60
+                                    ; the machine-head client checks this field for nil. NIL IS FALSE, SILLY PEOPLE!
+                                    :clean-session      (boolean (env :dev))}}))
 
 ; FIXME: might be better to re-use existing conn instead of creating a new on on connection failure?
 (defn connect
@@ -38,8 +41,6 @@
           (log/error e "cannot connect to" (env :mqtt-url))
           (Thread/sleep 15000))))))
 
-(declare connection-lost)
-
 (defn to-map [s]
   (parse-string s true))
 
@@ -52,7 +53,7 @@
     (log/info "setting subcriber for topic " topic)
     (swap! callbacks assoc topic f)
     (when @conn
-      (mh/subscribe @conn {topic 1} handle-delivery {:on-connection-lost connection-lost}))))
+      (mh/subscribe @conn {topic 1} handle-delivery))))
 
 (defn del-callback [t]
   (do
@@ -98,7 +99,7 @@
     (connect)
     (doseq [entry @callbacks]
       (log/info "starting subscriber for topic" (key entry))
-      (mh/subscribe @conn {(key entry) 1} handle-delivery {:on-connection-lost connection-lost}))
+      (mh/subscribe @conn {(key entry) 1} handle-delivery))
     conn))
 
 (defn stop-subscribers
@@ -111,6 +112,6 @@
   (log/info reason "connection lost - reconnecting...")
   (start-subscribers))
 
-(defstate conn
-          :start (start-subscribers)
-          :stop (stop-subscribers))
+(defstate mqtt
+  :start (start-subscribers)
+  :stop (stop-subscribers))
