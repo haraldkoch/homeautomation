@@ -14,11 +14,6 @@
   (fn [db [_ page]]
     (assoc db :page page)))
 
-(reg-event-db
-  :set-docs
-  (fn [db [_ docs]]
-    (assoc db :docs docs)))
-
 ;;subscriptions
 
 (reg-sub
@@ -26,7 +21,3 @@
   (fn [db _]
     (:page db)))
 
-(reg-sub
-  :docs
-  (fn [db _]
-    (:docs db)))

@@ -2,89 +2,91 @@
   (:require
     #_[homeautomation.db :refer [default-value schema]]
     [homeautomation.ajax :refer [send]]
-    [re-frame.core :refer [register-handler dispatch path trim-v after debug]]
-    #_[schema.core :as s]))
+    [re-frame.core :as rf]
+    #_[schema.core :as s]
+    [ajax.core :as ajax]))
 
-(defn reload-users []
-  (ajax.core/GET
-    "/users"
-    {:handler       #(dispatch [:process-users-response %1])
-     :error-handler #(dispatch [:bad-response %1])}))
+(rf/reg-event-db
+  :set-status
+  (fn [db [_ status]]
+    (assoc db :status status)))
 
-(defn reload-devices []
-  (ajax.core/GET
-    "/devices"
-    {:handler       #(dispatch [:process-devices-response %1])
-     :error-handler #(dispatch [:bad-response %1])}))
+(rf/reg-event-db
+  :clear-status
+  (fn [db _]
+    (dissoc db :status)))
 
-(defn clear-indicators [] (dispatch [:set-error nil]) (dispatch [:set-status nil]))
+(rf/reg-event-db
+  :set-error
+  (fn [db [_ error]]
+    (assoc db :error error)))
 
-(register-handler
+(rf/reg-event-db
+  :clear-error
+  (fn [db _]
+    (dissoc db :error)))
+
+(rf/reg-event-fx
+  :fetch-users
+  (fn [{:keys [db]} _]
+    {:http-xhrio {:method          :get
+                  :uri             "/users"
+                  :format          (ajax/transit-request-format)
+                  :response-format (ajax/transit-response-format)
+                  :on-success      [:process-users-response]
+                  :on-failure      [:bad-response]}}))
+
+(rf/reg-event-fx
+  :fetch-devices
+  (fn [{:keys [db]} _]
+    {:http-xhrio {:method          :get
+                  :uri             "/devices"
+                  :format          (ajax/transit-request-format)
+                  :response-format (ajax/transit-response-format)
+                  :on-success      [:process-devices-response]
+                  :on-failure      [:bad-response]}}))
+
+(rf/reg-event-fx
   :initialize
   (fn
-    [db _]
-    (reload-users)
-    (reload-devices)
-    (-> db
-        (assoc :users-loaded? false)
-        (assoc :devices-loaded? false))))
+    [{:keys [db]} _]
+    {:db         (-> db
+                     (assoc :users-loaded? false)
+                     (assoc :devices-loaded? false))
+     :dispatch-n (list
+                   [:fetch-users]
+                   [:fetch-devices])}))
 
-(register-handler
-  :fetch-users
-  (fn
-    [db _]
-    (reload-users)
-    db))
-
-(register-handler
-  :fetch-devices
-  (fn
-    [db _]
-    (reload-devices)
-    db))
-
-(register-handler                                           ;; when the GET succeeds
+(rf/reg-event-db
   :process-users-response
   (fn
     [db [_ response]]
-    (clear-indicators)
     (-> db
-        (assoc :users-loaded? true)                         ;; set flag saying we got it
+        (assoc :users-loaded? true)
         (assoc :users response))))
 
-(register-handler                                           ;; when the GET succeeds
+(rf/reg-event-db
   :process-devices-response
   (fn
     [db [_ response]]
-    (clear-indicators)
     (-> db
-        (assoc :devices-loaded? true)                       ;; set flag saying we got it
+        (assoc :devices-loaded? true)
         (assoc :devices response))))
-
-(register-handler
-  :set-status
-  (fn [db [_ status]]
-    (-> db (assoc :status status))))
-
-(register-handler
-  :set-error
-  (fn [db [_ error]]
-    (-> db (assoc :error error))))
 
 (defn replace-by-id [sequence entry]
   (map #(if (= (:id %) (:id entry)) entry %) sequence))
 
-(register-handler
+(rf/reg-event-db
   :presence/device-updated
   (fn [db [_ device]]
     (update db :devices replace-by-id device)))
 
-(register-handler
+(rf/reg-event-db
   :presence/user-updated
   (fn [db [_ user]]
     (update db :users replace-by-id user)))
 
-(register-handler
+(rf/reg-event-db
   :presence/device-added
   (fn [db [_ device]]
     (update db :devices conj device)))

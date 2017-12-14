@@ -1,6 +1,6 @@
 (ns homeautomation.subs
   (:require-macros [reagent.ratom :refer [reaction]])
-  (:require [re-frame.core :refer [register-sub]]))
+  (:require [re-frame.core :refer [register-sub] :as rf]))
 
 (defn device-sort [devicea deviceb]
   (let [ignore (compare (:ignore devicea) (:ignore deviceb))
@@ -54,14 +54,22 @@
           unnamed (reaction (filter #(nil? (:name %)) @devices))]
       (reaction (sort-by :macaddr @unnamed)))))
 
-(register-sub :status
-              (fn [db _] (reaction (:status @db))))
+(rf/reg-sub
+  :status
+  (fn [db _]
+    (:status db)))
 
-(register-sub :error
-              (fn [db _] (reaction (:error @db))))
+(rf/reg-sub
+  :error
+  (fn [db _]
+    (:error db)))
 
-(register-sub :devices-loaded?
-              (fn [db _] (reaction (:devices-loaded? @db))))
+(rf/reg-sub
+  :devices-loaded?
+  (fn [db _]
+    (:devices-loaded? db)))
 
-(register-sub :users-loaded?
-              (fn [db _] (reaction (:users-loaded? @db))))
+(rf/reg-sub
+  :users-loaded?
+  (fn [db _]
+    (:users-loaded? db)))
