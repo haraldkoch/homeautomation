@@ -1,7 +1,7 @@
 ;START:ns
 (ns homeautomation.ws
   (:require [taoensso.sente :as sente]
-            [re-frame.core :refer [dispatch]]))
+            [re-frame.core :as rf]))
 ;END:ns
 
 ;START:connection
@@ -26,7 +26,7 @@
 
 ;; this is the magic. dispatch incoming events from the server to re-frame.
 (defn message-handler [{[event data] :?data}]
-  (dispatch [event data]))
+  (rf/dispatch [event data]))
 
 (defn event-msg-handler [& [{:keys [message state handshake]
                              :or   {state     state-handler

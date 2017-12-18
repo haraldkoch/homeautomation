@@ -73,3 +73,8 @@
   :users-loaded?
   (fn [db _]
     (:users-loaded? db)))
+
+(rf/reg-sub
+  :device-to-delete
+  (fn [db _]
+    (:device-to-delete db)))

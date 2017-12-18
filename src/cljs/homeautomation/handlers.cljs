@@ -22,6 +22,14 @@
     (assoc db :error error)))
 
 (rf/reg-event-db
+  :bad-response
+  (fn [db [_ {:keys [last-method uri status status-text response]}]]
+    (-> db
+        (assoc :error (str last-method " to " uri " error " status ": " status-text " " (:error response)))
+        (dissoc :loading? :should-be-loading?))))
+
+
+(rf/reg-event-db
   :clear-error
   (fn [db _]
     (dissoc db :error)))
@@ -73,8 +81,38 @@
         (assoc :devices-loaded? true)
         (assoc :devices response))))
 
+(rf/reg-event-db
+  :clear-deleting
+  (fn [db _]
+    (-> db
+        (dissoc :device-to-delete))))
+
+(rf/reg-event-db
+  :delete-device
+  (fn [db [_ device]]
+    (-> db
+        (assoc :device-to-delete device))))
+
+(rf/reg-event-fx
+  :really-delete
+  (fn [{:keys [db]} [_ device]]
+    (println "really deleting" device)
+    {:db         (-> db
+                     (dissoc :device-to-delete))
+     :http-xhrio {:method          :delete
+                  :uri             (str "/devices/" (:id device))
+                  :format          (ajax/transit-request-format)
+                  :response-format (ajax/transit-response-format)
+                  :on-success      [:device-deleted (:id device)]
+                  :on-failure      [:bad-response]}}))
+
 (defn replace-by-id [sequence entry]
   (map #(if (= (:id %) (:id entry)) entry %) sequence))
+
+(rf/reg-event-fx
+  :chsk/ws-ping
+  (fn [_ e]
+    (println "ping received" e)))
 
 (rf/reg-event-db
   :presence/device-updated

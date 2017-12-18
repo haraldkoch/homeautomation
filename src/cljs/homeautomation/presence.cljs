@@ -4,7 +4,32 @@
             [ajax.core :refer [GET POST]]
             [clojure.string :refer [blank?]]
             [reagent.core :refer [atom]]
-            [re-frame.core :refer [dispatch dispatch-sync subscribe]]))
+            [re-frame.core :refer [dispatch dispatch-sync subscribe]]
+            [re-frame.core :as rf]))
+
+(defn delete-modal []
+  (when-let [device @(rf/subscribe [:device-to-delete])]
+    [:div.modal-wrapper
+     [:div.modal-backdrop
+      {:on-click (fn [event] (do (rf/dispatch [:clear-deleting]) (.preventDefault event) (.stopPropagation event)))}]
+     [:div.modal-child {:stlpe {:width "70%"}}
+      [:div.modal-content.panel-danger
+       [:div.modal-header.panel-heading
+        [:h4.modal-title "Deleting Are You Sure"]]
+       [:div.modal-body
+        [:div [:b "Really delete "
+               (:name device)
+               (when (:owner device) (str " (owner: " (:owner device) ")"))]]]
+       [:div.modal-footer
+        [:button.btn.btn-primary
+         {:type     "button" :title "Delete"
+          :on-click #(rf/dispatch [:really-delete device])}
+         "Delete"]
+        [:button.btn.btn-secondary
+         {:type "button" :title "Cancel"
+          :on-click #(rf/dispatch [:clear-deleting])}
+         "Cancel"]]]]]))
+
 
 (defn clear-indicators [] (dispatch [:set-error nil]) (dispatch [:set-status nil]))
 
@@ -12,15 +37,15 @@
 (defn add-user! [query]
   (send "/add-user" query
         #(do
-          (dispatch [:set-status %])
-          (dispatch [:fetch-users]))
+           (dispatch [:set-status %])
+           (dispatch [:fetch-users]))
         #(dispatch [:set-error (get-in % [:response :error])])))
 
 (defn set-owner! [device-id owner]
   (send "/set-device-owner" {:device_id device-id :owner owner}
         #(do
-          (dispatch [:fetch-devices])
-          (dispatch [:fetch-users]))                        ;; changing an owner can update user presence
+           (dispatch [:fetch-devices])
+           (dispatch [:fetch-users]))                       ;; changing an owner can update user presence
         #(dispatch [:set-error (get-in % [:response :error])])))
 
 (defn set-device-name! [device-id name]
@@ -31,8 +56,8 @@
 (defn set-ignore! [device-id ignore]
   (send "/set-device-ignore" {:device_id device-id :ignore ignore}
         #(do
-          (dispatch [:fetch-devices])
-          (dispatch [:fetch-users]))                        ;; toggling ignore can update user presence
+           (dispatch [:fetch-devices])
+           (dispatch [:fetch-users]))                       ;; toggling ignore can update user presence
         #(dispatch [:set-error (get-in % [:response :error])])))
 
 (defn input-field [param data-atom]
@@ -89,9 +114,9 @@
        (when @editing
          ; FIXME - allow deleting the name also
          [edit-field {:class   "edit"
-                                   :initial name
-                                   :on-save #(set-device-name! id %)
-                                   :on-stop #(reset! editing false)}])])))
+                      :initial name
+                      :on-save #(set-device-name! id %)
+                      :on-stop #(reset! editing false)}])])))
 
 (defn username-selection-list [_ _]
   (let [usernames (subscribe [:usernames])]
@@ -111,11 +136,15 @@
 
 (defn devices-table [items]
   [:table.table.table-striped.table-condensed
-   [:thead [:tr [:th "Device"] [:th "Owner"] [:th "Ignore"] [:th "Status"] [:th [:div "Last Change"] [:div "Last Seen"]]]]
+   [:thead [:tr [:th] [:th "Device"] [:th "Owner"] [:th "Ignore"] [:th "Status"] [:th [:div "Last Change"] [:div "Last Seen"]]]]
    (into [:tbody]
          (for [device items]
            ^{:key (:id device)}
            [:tr
+            [:td [:button.btn.btn-default
+                  {:type                    "button" :title "Delete"
+                   :on-click                #(rf/dispatch [:delete-device device])
+                   :dangerouslySetInnerHTML {:__html "&times;"}}]]
             [:td
              [device-name-field (:id device) (:name device)]
              [:div.small (:macaddr device)]]
@@ -136,6 +165,7 @@
         [:div "Loading Devices..."]
         [:div.row
          [:div.col-sm-12
+          [delete-modal]
           [:h2 "Devices"]
           [devices-table @devices]]]))))
 
